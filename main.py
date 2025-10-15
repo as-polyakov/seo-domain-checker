@@ -1,63 +1,22 @@
 import os
-import uuid
+from typing import List, Dict, Any
 
-from extract.extract import AhrefsClient, debug_requests_on
-from db import db
-from utils import get_badwords_by_language
+import dao
+from rules.rule_aggregator import evaluate_domain
+
+
+def update_targets_with_lang(targets, lang_by_domain) -> List[Dict[str, Any]]:
+    return [{**item, "lang": lang_by_domain[item["domain"]]} for item in targets]
 
 
 def main():
     project_root = os.path.abspath(os.getcwd())
     db_path = os.path.join(project_root, "ahrefs_data.db")
-    target_id = str(uuid.uuid4())
-    date_from = "2022-01-01"
-    query_date = "2025-01-01"
+    eval_results = [evaluate_domain("86caba33-c284-4939-80db-46267493cf28", domain)
+                    for domain in ["dimokratiki.gr"]]
 
-    client = AhrefsClient(
-        api_token=os.environ.get("AHREFS_API_TOKEN"),
-        db_path=db_path  # SQLite database file path
-    )
+    dao.persist_rule_evaluations("86caba33-c284-4939-80db-46267493cf28", eval_results)
 
-    # Initialize database (creates tables if they don't exist)
-    print("Initializing database...")
-    conn = db.init_database(db_path)
-    print("Database initialized successfully!")
-
-    # Create targets for analysis
-    targets = [
-        {
-            # "domain": "fmh.gr",
-            "domain": "triestecafe.it",
-            "mode": "subdomains",
-            "protocol": "both",
-        }
-    ]
-
-    # # Perform batch analysis
-    # print(V"Querying batch analysis...")
-    # results = client.batch_analysis(targets=targets)
-    # print("Saving batch analysis to database...")
-    # saved_target_ids = client.persist_batch_analysis(conn, target_id, results)
-    # print(f"Successfully saved {len(saved_target_ids)} records to database")
-
-    # print("Querying metrics...")
-    # results_by_domain = client.query_metric_history(target_id=target_id, targets=targets, date_from=date_from)
-    # for domain, result in results_by_domain.items():
-    #     client.persist_metric_history(conn, target_id, domain, None, result)
-
-    # print("Querying metrics...")
-    # results_by_domain = client.query_top_pages(target_id, query_date, targets)
-    # for domain, result in results_by_domain.items():
-    #     client.persist_top_pages(conn, target_id, domain, None, query_date, result)
-
-    # debug_requests_on()
-    print("Querying badwords in backlinks anchors...")
-    badwords = get_badwords_by_language("en")
-    results_by_domain = client.query_backlinks_badwords(target_id, badwords, targets)
-    client.persist_backlinks_badwords(conn, target_id, results_by_domain)
-    for domain, result in results_by_domain.items():
-        print("Domain:", domain)
-        print("Result:", result)
 
 
 if __name__ == "__main__":

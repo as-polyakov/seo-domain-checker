@@ -7,7 +7,7 @@ CREATE TABLE batch_analysis
     target_id               TEXT PRIMARY KEY, -- internal surrogate key
 
     -- Core identifiers
-    url                     TEXT NOT NULL,
+    domain                  TEXT NOT NULL,
     ip                      TEXT,             -- IP address as text
     protocol                TEXT NOT NULL CHECK (protocol IN ('http', 'https', 'both')),
     mode                    TEXT NOT NULL,
@@ -54,19 +54,25 @@ CREATE TABLE batch_analysis
     paid_traffic            INTEGER,
     paid_keywords           INTEGER,
     paid_ads                INTEGER,
+    lang_by_top_traffic     TEXT,
+    domain_category         TEXT,
+    detected_lang           TEXT,
 
     -- Timestamps for auditing
     created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (target_id, domain)
 );
 
+drop table ahrefs_org_traffic_country
 -- Table for top countries by traffic
 CREATE TABLE ahrefs_org_traffic_country
 (
     target_id    TEXT NOT NULL,
+    domain       TEXT NOT NULL,
     country_code TEXT NOT NULL, -- ISO country code (2 chars)
     traffic      INTEGER,
-    PRIMARY KEY (target_id, country_code),
+    PRIMARY KEY (target_id, domain, country_code),
     FOREIGN KEY (target_id) REFERENCES batch_analysis (target_id) ON DELETE CASCADE
 );
 
@@ -92,7 +98,7 @@ CREATE TABLE ahrefs_top_pages
     domain                          TEXT, -- ISO country code (2 chars)
     country_code                    TEXT, -- ISO country code (2 chars)
     date                            TEXT, --SO-8601 strings (YYYY-MM-DDTHH:MM:SSZ)
-    position                        INTEGET,
+    position                        INTEGER,
     top_keyword_best_position_title TEXT,
     sum_traffic                     INTEGER,
     PRIMARY KEY (target_id, domain, country_code, date, position)
@@ -106,6 +112,7 @@ CREATE TABLE ahrefs_organic_keywords
     keyword                        TEXT,
     keyword_country                TEXT,
     date                           TEXT, --SO-8601 strings (YYYY-MM-DDTHH:MM:SSZ)
+    forbidden_word_category        TEXT,
     is_best_position_set_top_3     BOOLEAN,
     is_best_position_set_top_4_10  BOOLEAN,
     is_best_position_set_top_11_50 BOOLEAN,
@@ -113,16 +120,61 @@ CREATE TABLE ahrefs_organic_keywords
     PRIMARY KEY (target_id, domain, keyword, keyword_country, date)
 );
 
-drop table ahrefs_backlinks_badwords
--- Table for organic keywords
-CREATE TABLE ahrefs_backlinks_badwords
+-- Table for
+CREATE TABLE anchors_forbidden_words
 (
-    target_id     TEXT NOT NULL,
-    domain        TEXT,
-    anchor        TEXT,
-    title         TEXT,
-    url_from      TEXT,
-    snippet_left  TEXT,
-    snippet_right TEXT,
-    PRIMARY KEY (target_id, domain, anchor)
+    target_id               TEXT NOT NULL,
+    domain                  TEXT,
+    direction               TEXT,
+    anchor                  TEXT,
+    forbidden_word_category TEXT,
+    title                   TEXT,
+    url_from                TEXT,
+    snippet_left            TEXT,
+    snippet_right           TEXT,
+    PRIMARY KEY (target_id, domain, direction, anchor)
 );
+
+-- Table for top pages
+CREATE TABLE query_errors
+(
+    target_id TEXT NOT NULL,
+    domain    TEXT, -- ISO country code (2 chars)
+    api       TEXT,
+    error     TEXT,
+    PRIMARY KEY (target_id, domain, api)
+);
+
+
+-- Table for top pages
+CREATE TABLE analysis
+(
+    target_id    TEXT NOT NULL,
+    name         TEXT, -- ISO country code (2 chars)
+    status       TEXT,
+    created_at   TEXT,
+    completed_at TEXT,
+    PRIMARY KEY (target_id)
+);
+
+-- Table for top pages
+CREATE TABLE analysis_domains
+(
+    target_id TEXT NOT NULL,
+    domain    TEXT, -- ISO country code (2 chars)
+    price_usd integer,
+    notes     TEXT,
+    PRIMARY KEY (target_id, domain)
+);
+
+CREATE TABLE rules_evaluation_results
+(
+    target_id          TEXT NOT NULL,
+    domain             TEXT, -- ISO country code (2 chars)
+    rule               text,
+    score              int,
+    critical_violation BOOLEAN,
+    details            TEXT,
+    PRIMARY KEY (target_id, domain, rule)
+);
+

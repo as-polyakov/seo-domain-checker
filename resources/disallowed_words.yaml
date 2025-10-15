@@ -1,0 +1,466 @@
+en:
+  forbidden:
+    - porn
+    - pornography
+    - drug
+    - drugs
+    - onlyfans
+    - escort
+    - escorts
+    - cbd
+    - sex
+    - sexual
+    - adult
+    - adults
+    - dating
+    - cannabis
+    - marijuana
+  spam:
+    - casino
+    - casinos
+    - slots
+    - slot
+    - betting
+
+fr:
+  forbidden:
+    - pornographie
+    - porno
+    - drogue
+    - drogues
+    - onlyfans
+    - escort
+    - escorte
+    - cbd
+    - sexe
+    - sexuel
+    - adulte
+    - adultes
+    - rencontres
+    - cannabis
+    - marijuana
+  spam:
+    - casino
+    - casinos
+    - machines à sous
+    - paris sportifs
+
+it:
+  forbidden:
+    - pornografia
+    - porno
+    - droga
+    - droghe
+    - onlyfans
+    - escort
+    - escorts
+    - cbd
+    - sesso
+    - sessuale
+    - adulto
+    - adulti
+    - incontri
+    - cannabis
+    - marijuana
+  spam:
+    - casinò
+    - casino
+    - slot
+    - scommesse
+    - scommesse sportive
+
+es:
+  forbidden:
+    - pornografía
+    - porno
+    - droga
+    - drogas
+    - onlyfans
+    - escort
+    - escorts
+    - cbd
+    - sexo
+    - sexual
+    - adulto
+    - adultos
+    - citas
+    - cannabis
+    - marihuana
+  spam:
+    - casino
+    - casinos
+    - tragamonedas
+    - apuestas
+    - apuestas deportivas
+
+de:
+  forbidden:
+    - pornografie
+    - porno
+    - droge
+    - drogen
+    - onlyfans
+    - escort
+    - escorts
+    - cbd
+    - sex
+    - sexuell
+    - erwachsene
+    - erwachsenen
+    - dating
+    - partnersuche
+    - cannabis
+    - marihuana
+  spam:
+    - casino
+    - casinos
+    - spielautomaten
+    - slots
+    - wetten
+    - sportwetten
+
+ja:
+  forbidden:
+    - ポルノ
+    - ポルノグラフィー
+    - 薬物
+    - ドラッグ
+    - OnlyFans
+    - エスコート
+    - デリヘル
+    - CBD
+    - セックス
+    - 性的
+    - アダルト
+    - 出会い
+    - デート
+    - 大麻
+    - カンナビス
+  spam:
+    - カジノ
+    - スロット
+    - ベッティング
+    - 賭け
+    - スポーツベッティング
+
+pt:
+  forbidden:
+    - pornografia
+    - porno
+    - droga
+    - drogas
+    - onlyfans
+    - acompanhante
+    - acompanhantes
+    - cbd
+    - sexo
+    - sexual
+    - adulto
+    - adultos
+    - encontros
+    - cannabis
+    - canábis
+  spam:
+    - casino
+    - casinos
+    - slots
+    - maquinas slot
+    - apostas
+    - apostas desportivas
+
+cs:
+  forbidden:
+    - pornografie
+    - porno
+    - droga
+    - drogy
+    - onlyfans
+    - eskort
+    - escort
+    - cbd
+    - sex
+    - sexuální
+    - dospělý
+    - dospělí
+    - seznamka
+    - randění
+    - konopí
+    - cannabis
+    - marihuana
+  spam:
+    - casino
+    - kasino
+    - automaty
+    - sloty
+    - sázení
+    - sportovní sázky
+
+sk:
+  forbidden:
+    - pornografia
+    - porno
+    - droga
+    - drogy
+    - onlyfans
+    - eskort
+    - escort
+    - cbd
+    - sex
+    - sexuálny
+    - dospelý
+    - dospelí
+    - zoznamka
+    - randenie
+    - konope
+    - cannabis
+    - marihuana
+  spam:
+    - casino
+    - kasíno
+    - kasína
+    - automaty
+    - sloty
+    - stávkovanie
+    - športové stávky
+
+hr:
+  forbidden:
+    - pornografija
+    - porno
+    - droga
+    - droge
+    - onlyfans
+    - eskort
+    - pratnja
+    - cbd
+    - seks
+    - seksualno
+    - odrasli
+    - upoznavanje
+    - kanabis
+    - marihuana
+  spam:
+    - kasino
+    - casino
+    - slotovi
+    - automati
+    - klađenje
+    - sportsko klađenje
+
+hu:
+  forbidden:
+    - pornográfia
+    - pornó
+    - drog
+    - drogok
+    - onlyfans
+    - escort
+    - cbd
+    - szex
+    - szexuális
+    - felnőtt
+    - felnőttek
+    - randi
+    - társkereső
+    - kannabisz
+    - marihuána
+  spam:
+    - casino
+    - kaszinó
+    - kaszinók
+    - nyerőgépek
+    - slotok
+    - fogadás
+    - sportfogadás
+
+he:
+  forbidden:
+    - פורנו
+    - סם
+    - סמים
+    - onlyfans
+    - ליווי
+    - אסקורט
+    - סי בי די
+    - סקס
+    - מיני
+    - למבוגרים
+    - היכרויות
+    - דייטינג
+    - קנאביס
+    - מריחואנה
+  spam:
+    - קזינו
+    - מכונות מזל
+    - סלוטים
+    - הימורים
+    - הימורי ספורט
+
+tr:
+  forbidden:
+    - pornografi
+    - porno
+    - uyusturucu
+    - uyuşturucu
+    - onlyfans
+    - escort
+    - eskort
+    - cbd
+    - seks
+    - cinsel
+    - yetiskin
+    - yetişkin
+    - flort
+    - flört
+    - arkadaslik
+    - arkadaşlık
+    - kenevir
+    - esrar
+    - marihuana
+  spam:
+    - casino
+    - kumar
+    - kumarhane
+    - slot
+    - slot makinesi
+    - slot makineleri
+    - bahis
+    - spor bahisleri
+
+el:
+  forbidden:
+    - πορνογραφία
+    - πορνό
+    - ναρκωτικό
+    - ναρκωτικά
+    - onlyfans
+    - συνοδός
+    - συνοδοί
+    - cbd
+    - σεξ
+    - σεξουαλικό
+    - ενήλικας
+    - ενήλικες
+    - γνωριμίες
+    - ραντεβού
+    - κάνναβη
+    - μαριχουάνα
+  spam:
+    - καζίνο
+    - φρουτάκια
+    - κουλοχέρηδες
+    - στοιχήματα
+    - στοιχηματισμός
+    - στοίχημα
+    - στοιχήματα σπορ
+
+ko:
+  forbidden:
+    - 포르노
+    - 포르노그래피
+    - 마약
+    - onlyfans
+    - 에스코트
+    - CBD
+    - 씨비디
+    - 섹스
+    - 성적
+    - 성인
+    - 성인용
+    - 데이팅
+    - 소개팅
+    - 만남
+    - 대마
+    - 대마초
+    - 칸나비스
+    - 마리화나
+  spam:
+    - 카지노
+    - 슬롯
+    - 슬롯머신
+    - 베팅
+    - 도박
+    - 스포츠베팅
+
+pl:
+  forbidden:
+    - pornografia
+    - porno
+    - narkotyk
+    - narkotyki
+    - onlyfans
+    - escort
+    - eskorta
+    - cbd
+    - seks
+    - seksualny
+    - dla dorosłych
+    - dla doroslych
+    - randki
+    - randka
+    - konopia
+    - konopie
+    - cannabis
+    - marihuana
+  spam:
+    - casino
+    - kasyno
+    - kasyna
+    - automaty
+    - sloty
+    - zakłady
+    - zaklady
+    - zakłady sportowe
+    - zaklady sportowe
+    - zakłady bukmacherskie
+    - zaklady bukmacherskie
+
+ar:
+  forbidden:
+    - إباحي
+    - إباحية
+    - بورنو
+    - مخدر
+    - مخدرات
+    - onlyfans
+    - مرافقة
+    - سي بي دي
+    - جنس
+    - جنسي
+    - للبالغين
+    - مواعدة
+    - تعارف
+    - قنب
+    - حشيش
+  spam:
+    - كازينو
+    - ماكينات قمار
+    - سلوتس
+    - رهان
+    - مراهنات
+    - مراهنات رياضية
+
+id:
+  forbidden:
+    - pornografi
+    - porno
+    - narkoba
+    - obat terlarang
+    - onlyfans
+    - escort
+    - pendamping
+    - cbd
+    - seks
+    - seksual
+    - dewasa
+    - untuk dewasa
+    - kencan
+    - ganja
+    - kanabis
+  spam:
+    - kasino
+    - casino
+    - slot
+    - mesin slot
+    - taruhan
+    - taruhan olahraga
