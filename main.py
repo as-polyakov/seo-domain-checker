@@ -10,12 +10,16 @@ def update_targets_with_lang(targets, lang_by_domain) -> List[Dict[str, Any]]:
 
 
 def main():
+    id = "a7cc50b3-4ba5-4ba1-970d-b35b7eede114"
     project_root = os.path.abspath(os.getcwd())
     db_path = os.path.join(project_root, "ahrefs_data.db")
-    eval_results = [evaluate_domain("86caba33-c284-4939-80db-46267493cf28", domain)
-                    for domain in ["dimokratiki.gr"]]
-
-    dao.persist_rule_evaluations("86caba33-c284-4939-80db-46267493cf28", eval_results)
+    eval_results = [evaluate_domain(id, domain)
+                    for domain in [
+                         "ahrefs.com",
+                       "google.com",
+                    ]]
+    print("Evaluation results:" + str(eval_results))
+    dao.persist_rule_evaluations(id, eval_results)
 
 
 

@@ -4,7 +4,7 @@ PRAGMA foreign_keys = ON;
 -- Main table for Ahrefs metrics
 CREATE TABLE batch_analysis
 (
-    target_id               TEXT PRIMARY KEY, -- internal surrogate key
+    target_id               TEXT, -- internal surrogate key
 
     -- Core identifiers
     domain                  TEXT NOT NULL,
@@ -64,7 +64,6 @@ CREATE TABLE batch_analysis
     PRIMARY KEY (target_id, domain)
 );
 
-drop table ahrefs_org_traffic_country
 -- Table for top countries by traffic
 CREATE TABLE ahrefs_org_traffic_country
 (
@@ -72,8 +71,7 @@ CREATE TABLE ahrefs_org_traffic_country
     domain       TEXT NOT NULL,
     country_code TEXT NOT NULL, -- ISO country code (2 chars)
     traffic      INTEGER,
-    PRIMARY KEY (target_id, domain, country_code),
-    FOREIGN KEY (target_id) REFERENCES batch_analysis (target_id) ON DELETE CASCADE
+    PRIMARY KEY (target_id, domain, country_code)
 );
 
 -- Table for org traffic history

@@ -6,7 +6,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 # Import Analysis and AnalysisStatus from model layer
-from model.models import Analysis, AnalysisStatus
+from model.models import Analysis, AnalysisStatus, RuleEvaluation
 
 
 class DomainInput(BaseModel):
@@ -20,6 +20,7 @@ class StartAnalysisRequest(BaseModel):
     """Request model for starting a new analysis"""
     name: str = Field(..., description="Name of the analysis session")
     domains: List[DomainInput] = Field(..., description="List of domains to analyze")
+
 
 
 class AnalysisResponse(BaseModel):
@@ -36,7 +37,32 @@ class AnalysisResponse(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+class RuleEvaluationResponse(BaseModel):
+    rule: str
+    score: float  # Normalized score (0-1 typically)
+    critical_violation: bool  # Whether this evaluation represents a critical violation
+    details: str
 
+
+class DomainAnalysisResult(BaseModel):
+    domain: str
+    rules_results: dict[str, RuleEvaluationResponse]
+    dr: int
+    org_traffic:dict[str, int]
+    org_traffic_history: dict[str, int]
+    geography: dict[str, int]
+    ld_lr_ratio: float
+    top_page_traffic_pct: int
+    backlinks_forbidden_words: int
+    anchors_forbidden_words: int
+    anchors_spam_words: int
+    organic_keywords_forbidden_words: int
+    organic_keywords_spam_words: int
+
+
+class AnalysisResultsResponse(BaseModel):
+    analysis: AnalysisResponse
+    domain_results: List[DomainAnalysisResult]
 
 class AnalysisListResponse(BaseModel):
     """Response model for list of analyses"""

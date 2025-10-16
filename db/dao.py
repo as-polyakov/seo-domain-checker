@@ -48,6 +48,20 @@ def update_analysis_status(analysis_id: str, status: AnalysisStatus) -> None:
 #     details            TEXT,
 #     PRIMARY KEY (target_id, domain)
 # );
+def get_rule_evaluations(analysis_id: str) -> dict[str, List[RuleEvaluation]]:
+    cur = conn.cursor()
+    res: dict[str, List[RuleEvaluation]] = {}
+    rows = select_all(
+        "select domain, rule, score, critical_violation,details  from rules_evaluation_results where target_id = ?",
+        (analysis_id,))
+    for row in rows:
+        if row["domain"] not in res:
+            res[row["domain"]] = []
+        res[row["domain"]].append(
+            RuleEvaluation(row["domain"], row["rule"], row["score"], row["critical_violation"], row["details"]))
+    return res
+
+
 def persist_rule_evaluations(analysis_id: str, evals: list[list[RuleEvaluation]]) -> None:
     cur = conn.cursor()
     for eval_by_domain in evals:
@@ -114,7 +128,13 @@ def store_rule_evaluations(analysis_id: str, res: List[RuleEvaluation]) -> None:
              rule_ev.details))
 
 
-def get_organic_keywords(target_id: str, domain: str, category: ForbiddenWordCategory) -> list[dict[str, str]]:
+# def get_backlinks_forbidden_words(target_id: str, domain: str, category: ForbiddenWordCategory) -> list[dict[str, str]]:
+#     return select_all(
+#         "select keyword, keyword_country, is_best_position_set_top_3,is_best_position_set_top_4_10, is_best_position_set_top_11_50, best_position_url from ahrefs_organic_keywords where " +
+#         "target_id = ? and domain = ? and forbidden_word_category = ?",
+#         (target_id, domain, category))
+
+def get_organic_keywords_forbidden_words(target_id: str, domain: str, category: ForbiddenWordCategory) -> list[dict[str, str]]:
     return select_all(
         "select keyword, keyword_country, is_best_position_set_top_3,is_best_position_set_top_4_10, is_best_position_set_top_11_50, best_position_url from ahrefs_organic_keywords where " +
         "target_id = ? and domain = ? and forbidden_word_category = ?",
@@ -129,7 +149,14 @@ def get_anchors_forbidden_words(target_id: str, domain: str,
         (target_id, domain, direction, category))
 
 
-def get_top_pages_traffic(target_id: str, domain: str) -> Dict[str, Tuple[str, int]]:
+def get_domain_top_page_traffic_pcs(target_id: str, domain: str) -> int:
+    traffic_by_position = get_top_pages_traffic(target_id, domain)
+    top1 = int(traffic_by_position[1][1])
+    sum_rest = sum(map(lambda x: int(x[1]), traffic_by_position.values())) - top1
+    return int(100 * top1 / sum_rest)
+
+
+def get_top_pages_traffic(target_id: str, domain: str) -> Dict[int, Tuple[str, int]]:
     return {r["position"]:
                 (r["top_keyword_best_position_title"], int(r["sum_traffic"])) for r in select_all(
         "select position, top_keyword_best_position_title, sum_traffic from ahrefs_top_pages where target_id = ? and domain = ?",
@@ -164,14 +191,12 @@ def get_domain_traffic_by_country(target_id: str, domain: str) -> Dict[str, int]
     return res
 
 
-def get_domain_dr(target_id: str, domain: str) -> int | None:
+def get_domain_dr(target_id: str, domain: str) -> int:
     rating = select_one(
         "SELECT domain_rating FROM batch_analysis WHERE target_id = ? AND domain = ?",
         (target_id, domain),
     )
-    if rating:
-        return rating["domain_rating"]
-    return None
+    return 0 if not rating["domain_rating"] else int(rating["domain_rating"])
 
 
 def get_domain_category(target_id: str, domain: str) -> str:

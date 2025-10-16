@@ -390,10 +390,10 @@ class AhrefsClient:
                         LinkDirection.OUT,
                         backlink['anchor'],
                         backlink['forbidden_word_category'],
-                        backlink['title'],
-                        backlink['url_from'],
-                        backlink['snippet_left'],
-                        backlink['snippet_right']
+                        "",
+                        "",
+                        "",
+                        ""
                     )
                     cur.execute(insert_query, values)
             conn.commit()
@@ -526,7 +526,7 @@ class AhrefsClient:
 
     def persist_batch_analysis(self, conn, target_id, batch_results: Dict[str, Any], lang_by_domain: Dict[str, str]) -> \
             List[str]:
-        saved_target_ids = []
+        saved_domains = []
         try:
             cur = conn.cursor()
             for result in batch_results['targets']:
@@ -591,22 +591,17 @@ class AhrefsClient:
                     self.persist_batch_analysis_country_traffic(cur, target_id, result.get('domain'),
                                                                 org_traffic_countries)
 
-                saved_target_ids.append(target_id)
+                saved_domains.append(target_id)
 
             conn.commit()
 
         except Exception:
             conn.rollback()
             raise
-        return saved_target_ids
+        return saved_domains
 
     def persist_batch_analysis_country_traffic(self, cursor, target_id: str, domain: str,
                                                country_data: List[Dict[str, Any]]):
-        cursor.execute(
-            "DELETE FROM ahrefs_org_traffic_country WHERE target_id = ?",
-            (target_id,)
-        )
-
         # Insert new country data
         for country_item in country_data:
             if isinstance(country_item, list):
