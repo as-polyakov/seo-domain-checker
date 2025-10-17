@@ -16,18 +16,9 @@ from utils import _safe_int
 
 
 def create_analysis(request: StartAnalysisRequest) -> AnalysisResponse:
-    """
-    Create a new analysis session
-    
-    Args:
-        request: StartAnalysisRequest containing analysis details
-        
-    Returns:
-        AnalysisResponse with the created analysis information
-    """
     analysis_id = str(uuid.uuid4())
     res = Analysis(analysis_id, request.name, AnalysisStatus.PENDING, datetime.now(), None,
-                   [AnalysisDomain(d.domain, _safe_int(d.price), d.notes) for d in request.domains])
+                   [AnalysisDomain(d.domain, _safe_int(d.price), d.notes) for d in request.domains], 0)
     dao.persist_analysis(res)
 
     analysis_data = {
@@ -55,27 +46,18 @@ def create_analysis(request: StartAnalysisRequest) -> AnalysisResponse:
 #        completed_at,
 #        (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains"
 #         from analysis where target_id = ?
-def get_analysis(analysis_id: str) -> AnalysisResponse:
-    analysis = dao.get_analysis(analysis_id)
-    return AnalysisResponse(id=analysis["target_id"], name=analysis["name"], status=AnalysisStatus(analysis["status"]),
-                            created_at=dao.safe_date_from_str(analysis["created_at"]),
-                            completed_at=dao.safe_date_from_str(analysis["completed_at"]),
-                            total_domains=int(analysis["total_domains"]), domains_analyzed=0)
+def to_analysis_response(analysis: Analysis) -> AnalysisResponse:
+    return AnalysisResponse(id=analysis.target_id, name=analysis.name, status=AnalysisStatus(analysis.status),
+                            created_at=analysis.created_at,
+                            completed_at=analysis.completed_at,
+                            total_domains=len(analysis.domains), domains_analyzed=analysis.processed_domains)
 
 
-#         """
-#         select target_id,
-#        name,
-#        status,
-#        created_at,
-#        completed_at,
-#        (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains"
-#         from analysis
 def list_analyses() -> List[AnalysisResponse]:
     return [AnalysisResponse(id=r["target_id"], name=r["name"], status=r["status"],
                              created_at=dao.safe_date_from_str(r["created_at"]),
                              completed_at=dao.safe_date_from_str(r["completed_at"]),
-                             total_domains=r["total_domains"], domains_analyzed=0)
+                             total_domains=r["total_domains"], domains_analyzed=r["processed_domains"])
             for r in dao.get_recent_analysis()]
 
 

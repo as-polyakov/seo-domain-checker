@@ -1,55 +1,42 @@
-import sqlite3
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-from db.db import init_database, LinkDirection
+from db.db import get_thread_connection
+from db.db import LinkDirection
 from model import Analysis, AnalysisStatus
 from resources.disallowed_words import ForbiddenWordCategory
-from model.models import RuleEvaluation
+from model.models import RuleEvaluation, AnalysisDomain
 from utils import _safe_int
-
-conn = init_database()
-conn.row_factory = sqlite3.Row
 
 
 def select_one(query: str, params: tuple = ()) -> dict | None:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     cur.execute(query, params)
     row = cur.fetchone()
     return dict(row) if row else None
 
 
 def select_all(query: str, params: tuple = ()) -> list[dict]:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     cur.execute(query, params)
     rows = cur.fetchall()
     return [dict(r) for r in rows]
 
 
 def insert_one(query: str, params: tuple = ()):
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     cur.execute(query, params)
-    conn.commit()
+    get_thread_connection().commit()
 
 
 def update_analysis_status(analysis_id: str, status: AnalysisStatus) -> None:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     cur.execute("update analysis set status = ? where target_id = ?", (status, analysis_id))
-    conn.commit()
+    get_thread_connection().commit()
 
 
-# CREATE TABLE rules_evaluation_results
-# (
-#     target_id          TEXT NOT NULL,
-#     domain             TEXT, -- ISO country code (2 chars)
-#     rule               text,
-#     score              int,
-#     critical_violation BOOLEAN,
-#     details            TEXT,
-#     PRIMARY KEY (target_id, domain)
-# );
 def get_rule_evaluations(analysis_id: str) -> dict[str, List[RuleEvaluation]]:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     res: dict[str, List[RuleEvaluation]] = {}
     rows = select_all(
         "select domain, rule, score, critical_violation,details  from rules_evaluation_results where target_id = ?",
@@ -63,15 +50,16 @@ def get_rule_evaluations(analysis_id: str) -> dict[str, List[RuleEvaluation]]:
 
 
 def persist_rule_evaluations(analysis_id: str, evals: list[list[RuleEvaluation]]) -> None:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     for eval_by_domain in evals:
         for eval in eval_by_domain:
             cur.execute(
                 "insert into rules_evaluation_results (target_id, domain, rule, score, critical_violation, details) VALUES (?, ?, ?, ?, ?, ?)",
                 (analysis_id, eval.domain, eval.rule, eval.score, eval.critical_violation, eval.details))
-    conn.commit()
+    get_thread_connection().commit()
 
 
+# def get_analysis(analysis: Analysis) -> None:
 def persist_analysis(analysis: Analysis) -> None:
     insert_one(
         "insert into analysis (target_id, name, status, created_at, completed_at) VALUES (?, ?, ?, ?, ?)",
@@ -81,7 +69,7 @@ def persist_analysis(analysis: Analysis) -> None:
     for domain in analysis.domains:
         insert_one("insert into analysis_domains (target_id, domain, price_usd, notes) VALUES (?, ?, ?, ?)",
                    (analysis.target_id, domain.domain, domain.price_usd, domain.notes))
-    conn.commit()
+    get_thread_connection().commit()
 
 
 def safe_date_to_str(date: datetime) -> str:
@@ -100,27 +88,31 @@ def get_recent_analysis() -> list[dict]:
        status,
        created_at,
        completed_at,
-       (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains"
+       (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains", processed_domains
         from analysis
         order by created_at, completed_at desc
         """, ())
 
 
-def get_analysis(analysis_id: str) -> dict[str, str]:
-    return select_one(
+def get_analysis(analysis_id: str) -> Analysis:
+    h = select_one(
         """
         select target_id,
        name,
        status,
        created_at,
        completed_at,
-       (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains"
+       (select count(*) from analysis_domains where target_id = analysis.target_id) as "total_domains", processed_domains
         from analysis where target_id = ?
         """, (analysis_id,))
+    domains = select_all("select domain, price_usd, notes from analysis_domains where target_id = ?", (analysis_id,))
+    return Analysis(h["target_id"], h["name"], h["status"], safe_date_from_str(h["created_at"]), safe_date_from_str(h["completed_at"]),
+                    [AnalysisDomain(d["domain"], d["price_usd"], d["notes"]) for d in domains],
+                    int(h["processed_domains"]))
 
 
 def store_rule_evaluations(analysis_id: str, res: List[RuleEvaluation]) -> None:
-    cur = conn.cursor()
+    cur = get_thread_connection().cursor()
     for rule_ev in res:
         cur.execute(
             "insert into rules_evaluation_results (target_id, domain, rule, score, critical_violation, details) VALUES (?, ?, ?, ?, ?, ?)",
@@ -134,7 +126,8 @@ def store_rule_evaluations(analysis_id: str, res: List[RuleEvaluation]) -> None:
 #         "target_id = ? and domain = ? and forbidden_word_category = ?",
 #         (target_id, domain, category))
 
-def get_organic_keywords_forbidden_words(target_id: str, domain: str, category: ForbiddenWordCategory) -> list[dict[str, str]]:
+def get_organic_keywords_forbidden_words(target_id: str, domain: str, category: ForbiddenWordCategory) -> list[
+    dict[str, str]]:
     return select_all(
         "select keyword, keyword_country, is_best_position_set_top_3,is_best_position_set_top_4_10, is_best_position_set_top_11_50, best_position_url from ahrefs_organic_keywords where " +
         "target_id = ? and domain = ? and forbidden_word_category = ?",
@@ -152,7 +145,7 @@ def get_anchors_forbidden_words(target_id: str, domain: str,
 def get_domain_top_page_traffic_pcs(target_id: str, domain: str) -> int:
     traffic_by_position = get_top_pages_traffic(target_id, domain)
     top1 = int(traffic_by_position[1][1])
-    sum_rest = sum(map(lambda x: int(x[1]), traffic_by_position.values())) - top1
+    sum_rest = sum(map(lambda x: int(x[1]), traffic_by_position.values()))
     return int(100 * top1 / sum_rest)
 
 
@@ -189,6 +182,10 @@ def get_domain_traffic_by_country(target_id: str, domain: str) -> Dict[str, int]
         (target_id, domain))
     res = {e["country_code"]: int(e["traffic"]) for e in organic_traffic}
     return res
+
+
+def get_analysis_request(analysis_id) -> int:
+    select_all("")
 
 
 def get_domain_dr(target_id: str, domain: str) -> int:

@@ -28,6 +28,7 @@ class Analysis:
     created_at: datetime                # Timestamp when analysis was created
     completed_at: Optional[datetime]    # Timestamp when analysis completed (None if not completed)
     domains: List[AnalysisDomain]
+    processed_domains: int
 
 
 @dataclass
@@ -38,3 +39,19 @@ class RuleEvaluation:
     score: float  # Normalized score (0-1 typically)
     critical_violation: bool  # Whether this evaluation represents a critical violation
     details: str
+
+@dataclass
+class TargetQueryableDomain:
+    domain:str
+    lang: Optional[str] = None
+    mode: str = "subdomains"
+    protocol: str = "both"
+
+    def __hash__(self):
+        return hash((self.domain, self.mode, self.protocol))
+
+    def __eq__(self, other):
+        if not isinstance(other, TargetQueryableDomain):
+            return False
+        return (self.domain, self.mode, self.protocol) == \
+            (other.domain, other.mode, other.protocol)

@@ -1,26 +1,18 @@
-import os
-from typing import List, Dict, Any
-
 import dao
+from db.db import init_database
 from rules.rule_aggregator import evaluate_domain
 
 
-def update_targets_with_lang(targets, lang_by_domain) -> List[Dict[str, Any]]:
-    return [{**item, "lang": lang_by_domain[item["domain"]]} for item in targets]
-
-
 def main():
-    id = "a7cc50b3-4ba5-4ba1-970d-b35b7eede114"
-    project_root = os.path.abspath(os.getcwd())
-    db_path = os.path.join(project_root, "ahrefs_data.db")
-    eval_results = [evaluate_domain(id, domain)
-                    for domain in [
-                         "ahrefs.com",
-                       "google.com",
-                    ]]
-    print("Evaluation results:" + str(eval_results))
-    dao.persist_rule_evaluations(id, eval_results)
+    init_database()
+    id = "0176e4b4-9a13-43d1-9eb1-5792f908126f"
+    analysis = dao.get_analysis(id)
+    eval_results = [evaluate_domain(id, domain.domain)
+                    for domain in analysis.domains]
 
+    print(f"{eval_results}")
+    # for d in ["bitchipdigital.com"]:
+    #     print(HistoricalOrganicTrafficRule().eval(EvalContext(id, d)))
 
 
 if __name__ == "__main__":

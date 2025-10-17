@@ -75,13 +75,26 @@ export default function App() {
             SpamWordsOrganicKeywordsRule: Math.round((dr.rules_results.SpamWordsOrganicKeywordsRule?.score || 0) * 100),
           };
 
+          // Find all rules with critical violations
+          const criticalViolations: string[] = [];
+          Object.entries(dr.rules_results).forEach(([ruleName, ruleData]: [string, any]) => {
+            if (ruleData.critical_violation) {
+              // Convert camelCase to readable format
+              const readableName = ruleName
+                .replace(/Rule$/, '')
+                .replace(/([A-Z])/g, ' $1')
+                .trim();
+              criticalViolations.push(readableName);
+            }
+          });
+
           // Determine status based on critical violations
           const hasCriticalViolation = dr.rules_results.overall.critical_violation;
           const status = hasCriticalViolation ? "Reject" : (scores.overall > 60 ? "OK" : "Review");
           return {
             id: String(index + 1),
             domain: dr.domain,
-            price: "N/A", // Price not in API response
+            price:  dr.price,
             scores,
             dr: dr.dr,
             org_traffic: dr.org_traffic,
@@ -95,6 +108,7 @@ export default function App() {
             organic_keywords_forbidden_words: dr.organic_keywords_forbidden_words,
             organic_keywords_spam_words: dr.organic_keywords_spam_words,
             status,
+            criticalViolations: criticalViolations.length > 0 ? criticalViolations : undefined,
           };
         });
 

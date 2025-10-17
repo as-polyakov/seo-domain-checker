@@ -50,7 +50,7 @@ sleep 2
 # Start frontend (React + Vite)
 echo "⚛️  Starting React frontend on http://localhost:3000..."
 cd frontend
-npm run dev &
+npm run dev --host &
 FRONTEND_PID=$!
 cd ..
 

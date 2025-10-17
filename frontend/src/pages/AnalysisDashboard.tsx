@@ -1,12 +1,42 @@
 import { useState } from "react";
-import { Plus, PlayCircle, Loader2, Clock, CheckCheck, XCircle, Eye, X } from "lucide-react";
+import { Plus, PlayCircle, Loader2, Clock, CheckCheck, XCircle, Eye, X, Upload, FileText } from "lucide-react";
 import { Badge, Button, Input } from "../components/UIComponents";
 import { Analysis, AnalysisStatus, DomainInput } from "../types";
+
+// ===== CSV Parser =====
+function parseCSV(text: string): DomainInput[] {
+  const lines = text.split('\n').filter(line => line.trim());
+  const domains: DomainInput[] = [];
+  
+  // Skip header if it exists (check if first line contains common headers)
+  const startIndex = lines[0].toLowerCase().includes('domain') ? 1 : 0;
+  
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Split by comma, handling quoted values
+    const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+    const cleaned = parts.map(p => p.replace(/^"|"$/g, '').trim());
+    
+    if (cleaned[0]) {
+      domains.push({
+        id: String(Date.now() + i),
+        domain: cleaned[0] || "",
+        price: cleaned[1] || "",
+        notes: cleaned[2] || "",
+      });
+    }
+  }
+  
+  return domains;
+}
 
 // ===== New Analysis Modal =====
 function NewAnalysisModal({ open, onClose, onSubmit }: any) {
   const [analysisName, setAnalysisName] = useState("");
   const [domains, setDomains] = useState<DomainInput[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const addDomain = () => {
     const newId = String(Date.now());
@@ -15,6 +45,52 @@ function NewAnalysisModal({ open, onClose, onSubmit }: any) {
 
   const updateDomain = (id: string, field: keyof DomainInput, value: string) => {
     setDomains(domains.map(d => d.id === id ? { ...d, [field]: value } : d));
+  };
+
+  const removeDomain = (id: string) => {
+    setDomains(domains.filter(d => d.id !== id));
+  };
+
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const parsed = parseCSV(text);
+      if (parsed.length > 0) {
+        setDomains(parsed);
+      } else {
+        alert("No valid domains found in CSV file");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+      handleFileUpload(file);
+    } else {
+      alert("Please upload a CSV file");
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
   };
 
   const handleSubmit = () => {
@@ -55,57 +131,107 @@ function NewAnalysisModal({ open, onClose, onSubmit }: any) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium">Domains to Analyze</label>
-              <Button size="sm" onClick={addDomain}><Plus className="h-4 w-4" />Add Domain</Button>
+              <div className="flex items-center gap-2">
+                {domains.length > 0 && (
+                  <Button size="sm" variant="outline" onClick={() => setDomains([])}><X className="h-4 w-4" />Clear All</Button>
+                )}
+                <Button size="sm" onClick={addDomain}><Plus className="h-4 w-4" />Add Row</Button>
+              </div>
             </div>
 
             {domains.length === 0 ? (
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center text-slate-500">
-                <p className="mb-2">No domains added yet</p>
-                <Button size="sm" variant="outline" onClick={addDomain}><Plus className="h-4 w-4" />Add First Domain</Button>
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging 
+                    ? 'border-indigo-500 bg-indigo-50' 
+                    : 'border-slate-300 bg-slate-50'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-indigo-500' : 'text-slate-400'}`} />
+                <p className="text-slate-700 font-medium mb-2">
+                  {isDragging ? 'Drop CSV file here' : 'Drag & drop CSV file here'}
+                </p>
+                <p className="text-sm text-slate-500 mb-4">or</p>
+                <div className="flex items-center justify-center gap-3">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileInput}
+                      className="hidden"
+                    />
+                    <span className="inline-flex items-center gap-2 rounded-md border transition active:translate-y-px whitespace-nowrap px-2 py-1 text-sm bg-white text-slate-800 border-slate-300 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700">
+                      <FileText className="h-4 w-4" />Browse Files
+                    </span>
+                  </label>
+                  <Button size="sm" variant="outline" onClick={addDomain}>
+                    <Plus className="h-4 w-4" />Add Manually
+                  </Button>
+                </div>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-left">
+                  <p className="text-xs font-medium text-blue-900 mb-1">CSV Format:</p>
+                  <code className="text-xs text-blue-800">domain,price,notes</code>
+                  <p className="text-xs text-blue-700 mt-1">Example: example.com,$250,Premium domain</p>
+                </div>
               </div>
             ) : (
               <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="text-left py-2 px-3 font-medium">#</th>
-                      <th className="text-left py-2 px-3 font-medium">Domain</th>
-                      <th className="text-left py-2 px-3 font-medium">Price (optional)</th>
-                      <th className="text-left py-2 px-3 font-medium">Notes (optional)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {domains.map((d, idx) => (
-                      <tr key={d.id} className="border-b border-slate-100 last:border-0">
-                        <td className="py-2 px-3 text-slate-500">{idx + 1}</td>
-                        <td className="py-2 px-3">
-                          <Input
-                            placeholder="example.com"
-                            value={d.domain}
-                            onChange={(e: any) => updateDomain(d.id, 'domain', e.target.value)}
-                            className="text-sm"
-                          />
-                        </td>
-                        <td className="py-2 px-3">
-                          <Input
-                            placeholder="$250"
-                            value={d.price || ""}
-                            onChange={(e: any) => updateDomain(d.id, 'price', e.target.value)}
-                            className="text-sm"
-                          />
-                        </td>
-                        <td className="py-2 px-3">
-                          <Input
-                            placeholder="Additional context..."
-                            value={d.notes || ""}
-                            onChange={(e: any) => updateDomain(d.id, 'notes', e.target.value)}
-                            className="text-sm"
-                          />
-                        </td>
+                <div className="max-h-96 overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
+                      <tr>
+                        <th className="text-left py-2 px-3 font-medium w-12">#</th>
+                        <th className="text-left py-2 px-3 font-medium">Domain</th>
+                        <th className="text-left py-2 px-3 font-medium">Price</th>
+                        <th className="text-left py-2 px-3 font-medium">Notes</th>
+                        <th className="text-left py-2 px-3 font-medium w-12"></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {domains.map((d, idx) => (
+                        <tr key={d.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                          <td className="py-2 px-3 text-slate-500">{idx + 1}</td>
+                          <td className="py-2 px-3">
+                            <Input
+                              placeholder="example.com"
+                              value={d.domain}
+                              onChange={(e: any) => updateDomain(d.id, 'domain', e.target.value)}
+                              className="text-sm"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <Input
+                              placeholder="$250"
+                              value={d.price || ""}
+                              onChange={(e: any) => updateDomain(d.id, 'price', e.target.value)}
+                              className="text-sm"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <Input
+                              placeholder="Additional notes..."
+                              value={d.notes || ""}
+                              onChange={(e: any) => updateDomain(d.id, 'notes', e.target.value)}
+                              className="text-sm"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <button
+                              onClick={() => removeDomain(d.id)}
+                              className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-rose-600"
+                              title="Remove"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

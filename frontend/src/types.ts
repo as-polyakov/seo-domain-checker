@@ -50,6 +50,7 @@ export interface DomainData {
   organic_keywords_forbidden_words: number;
   organic_keywords_spam_words: number;
   status: DomainStatus;
+  criticalViolations?: string[]; // Rules that triggered rejection
 }
 
 

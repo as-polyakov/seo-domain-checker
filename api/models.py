@@ -46,6 +46,7 @@ class RuleEvaluationResponse(BaseModel):
 
 class DomainAnalysisResult(BaseModel):
     domain: str
+    price: int
     rules_results: dict[str, RuleEvaluationResponse]
     dr: int
     org_traffic:dict[str, int]
@@ -64,7 +65,7 @@ class AnalysisResultsResponse(BaseModel):
     analysis: AnalysisResponse
     domain_results: List[DomainAnalysisResult]
 
-class AnalysisListResponse(BaseModel):
+class ListAnalysesResponse(BaseModel):
     """Response model for list of analyses"""
     analyses: List[AnalysisResponse]
 

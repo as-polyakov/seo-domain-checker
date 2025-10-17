@@ -9,20 +9,23 @@ import functools
 import json
 import logging
 import os
+import threading
 import time
+import traceback
+from concurrent.futures import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, date
 from functools import wraps
 from http.client import HTTPConnection
 from typing import List, Dict, Any
-
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import requests
 
-import db
-from dao import update_analysis_status
-from db.db import init_database, LinkDirection
+import db.db
+from db.db import init_database, LinkDirection, get_thread_connection
 from lang import get_domain_lang_by_top_traffic, build_lang_by_domain
-from main import update_targets_with_lang
-from model import Analysis, AnalysisStatus
+from model import Analysis
+from model.models import TargetQueryableDomain
 from query_utils import construct_field_or
 from resources.disallowed_words import get_disallowed_words
 from utils import url_to_domain, get_disallowed_words_by_lang_fallback, _safe_int, _safe_float
@@ -92,7 +95,12 @@ def debug_requests_off():
     requests_log.setLevel(logging.WARNING)
     requests_log.propagate = False
 
-
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((requests.ConnectionError, requests.Timeout))
+)
 def query(session: requests.Session, url: str, timeout, method: str, endpoint, data: Dict[str, Any],
           save_to_cache=True) -> Dict[
     str, Any]:
@@ -196,9 +204,6 @@ class AhrefsClient:
         self.timeout = timeout
         self.session = requests.Session()
 
-        # Database file path
-        self.db_path = db_path
-
         # Set default headers
         self.session.headers.update({
             'Accept': 'application/json, application/xml',
@@ -229,7 +234,7 @@ class AhrefsClient:
         return query(self.session, f"{self.BASE_URL}{endpoint}", self.timeout, method, endpoint, data, save_to_cache)
 
     def batch_analysis(self,
-                       targets: List[Dict[str, str]]) -> Dict[str, Any]:
+                       targets: List[TargetQueryableDomain]) -> Dict[str, Any]:
         select = [
             "ahrefs_rank",
             "backlinks",
@@ -270,7 +275,7 @@ class AhrefsClient:
 
         # Build request payload
         payload = {
-            "targets": [{"url" if k == "domain" else k: v for k, v in target.items()} for target in targets],
+            "targets": [{"url": d.domain, "mode": d.mode, "protocol": d.protocol} for d in targets],
             "select": select
         }
 
@@ -278,26 +283,27 @@ class AhrefsClient:
 
     def query_organic_keywords_forbidden_words(self, target_id, date: str,
                                                forbidden_class_by_forbidden_word_by_lang: Dict[str, Dict[str, str]],
-                                               targets_with_lang: List[Dict[str, str]]) -> MultipleDomainQueryResult:
+                                               targets_with_lang: List[
+                                                   TargetQueryableDomain]) -> MultipleDomainQueryResult:
         select = ",".join(["keyword", "keyword_country", "is_best_position_set_top_3", "is_best_position_set_top_4_10",
                            "is_best_position_set_top_11_50", "best_position_url"])
         res = MultipleDomainQueryResult("query_organic_keywords")
-        result_by_domain = {}
         for target in targets_with_lang:
-            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target["lang"]]
+            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target.lang]
             all_forbidden_words = [word for word in forbidden_class_by_forbidden_word.keys()]
             query_params = {
-                "target": target['domain'],
-                "protocol": target['protocol'],
-                "mode": target['mode'],
-                "select": ",".join(select),
+                "date": date,
+                "target": target.domain,
+                "protocol": target.protocol,
+                "mode": target.mode,
+                "select": select,
                 "limit": 50,
                 "where": json.dumps(
                     construct_field_or("keyword", all_forbidden_words))}
 
-            self.safe_query_per_domain(res, target['domain'], "get", self.BACKLINKS_ENDPOINT, query_params)
-            if not target['domain'] in res.failed_domains:
-                raw_result = res.results_by_domain[target['domain']]
+            self.safe_query_per_domain(res, target.domain, "get", self.ORGANIC_KEYWORDS_ENDPOINT, query_params)
+            if not target.domain in res.failed_domains:
+                raw_result = res.results_by_domain[target.domain]
                 for raw_res_entity in raw_result["keywords"]:
                     raw_res_entity["forbidden_word_category"] = None
                     keyword = raw_res_entity["keyword"]
@@ -309,56 +315,56 @@ class AhrefsClient:
     def query_top_pages(self,
                         target_id,
                         date: str,
-                        targets: List[Dict[str, str]]) -> MultipleDomainQueryResult:
+                        targets: List[TargetQueryableDomain]) -> MultipleDomainQueryResult:
         select = ",".join(["top_keyword_best_position_title", "sum_traffic"])
         res = MultipleDomainQueryResult("query_top_pages")
         for target in targets:
             query_params = {"date": date,
-                            "target": target['domain'],
-                            "protocol": target['protocol'],
-                            "mode": target['mode'],
+                            "target": target.domain,
+                            "protocol": target.protocol,
+                            "mode": target.mode,
                             "select": select,
                             "order_by": "sum_traffic",
                             "limit": 10, }
-            self.safe_query_per_domain(res, target['domain'], "get", self.TOP_PAGES_ENDPOINT, query_params)
+            self.safe_query_per_domain(res, target.domain, "get", self.TOP_PAGES_ENDPOINT, query_params)
         return res
 
     def query_metric_history(self,
                              target_id,
                              date_from: str,
-                             targets: List[Dict[str, str]]) -> MultipleDomainQueryResult:
+                             targets: List[TargetQueryableDomain]) -> MultipleDomainQueryResult:
         select = ",".join(["date", "org_cost", "org_traffic", "paid_cost", "paid_traffic"])
         res = MultipleDomainQueryResult("query_metric_history")
         for target in targets:
             query_params = {"date_from": date_from,
-                            "target": target['domain'],
-                            "protocol": target['protocol'],
-                            "mode": target['mode'],
+                            "target": target.domain,
+                            "protocol": target.protocol,
+                            "mode": target.mode,
                             "select": select}
-            self.safe_query_per_domain(res, target['domain'], "get", self.METRICS_HISTORY_ENDPOINT, query_params)
+            self.safe_query_per_domain(res, target.domain, "get", self.METRICS_HISTORY_ENDPOINT, query_params)
         return res
 
     def query_outgoing_anchors_forbidden_words(self,
                                                target_id,
                                                forbidden_class_by_forbidden_word_by_lang: Dict[str, Dict[str, str]],
-                                               targets: List[Dict[str, str]]) -> MultipleDomainQueryResult:
+                                               targets: List[TargetQueryableDomain]) -> MultipleDomainQueryResult:
         select = ",".join(["anchor", "dofollow_links"])
         res = MultipleDomainQueryResult("query_outgoing_external_anchors")
         for target in targets:
-            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target["lang"]]
+            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target.lang]
             all_forbidden_words = [word for word in forbidden_class_by_forbidden_word.keys()]
             query_params = {
-                "target": target['domain'],
-                "protocol": target['protocol'],
-                "mode": target['mode'],
+                "target": target.domain,
+                "protocol": target.protocol,
+                "mode": target.mode,
                 "select": select,
                 "where": json.dumps(
                     construct_field_or("anchor", all_forbidden_words))}
 
-            self.safe_query_per_domain(res, target['domain'], "get", self.OUTGOING_EXTERNAL_ANCHORS_ENDPOINT,
+            self.safe_query_per_domain(res, target.domain, "get", self.OUTGOING_EXTERNAL_ANCHORS_ENDPOINT,
                                        query_params)
-            if not target['domain'] in res.failed_domains:
-                raw_result = res.results_by_domain[target['domain']]
+            if not target.domain in res.failed_domains:
+                raw_result = res.results_by_domain[target.domain]
                 for linked_anchor in raw_result["linkedanchors"]:
                     linked_anchor["forbidden_word_category"] = None
                     anchor = linked_anchor["anchor"]
@@ -437,25 +443,26 @@ class AhrefsClient:
     def query_incoming_anchors_forbidden_words(self,
                                                target_id,
                                                forbidden_class_by_forbidden_word_by_lang: Dict[str, Dict[str, str]],
-                                               targets_with_lang: List[Dict[str, str]]) -> MultipleDomainQueryResult:
+                                               targets_with_lang: List[
+                                                   TargetQueryableDomain]) -> MultipleDomainQueryResult:
         select = ["anchor", "title", "url_from", "snippet_left", "snippet_right"]
         res = MultipleDomainQueryResult("query_backlinks_badwords")
         result_by_domain = {}
         for target in targets_with_lang:
-            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target["lang"]]
+            forbidden_class_by_forbidden_word = forbidden_class_by_forbidden_word_by_lang[target.lang]
             all_forbidden_words = [word for word in forbidden_class_by_forbidden_word.keys()]
             query_params = {
-                "target": target['domain'],
-                "protocol": target['protocol'],
-                "mode": target['mode'],
+                "target": target.domain,
+                "protocol": target.protocol,
+                "mode": target.mode,
                 "select": ",".join(select),
                 "limit": 50,
                 "where": json.dumps(
                     construct_field_or("anchor", all_forbidden_words))}
 
-            self.safe_query_per_domain(res, target['domain'], "get", self.BACKLINKS_ENDPOINT, query_params)
-            if not target['domain'] in res.failed_domains:
-                raw_result = res.results_by_domain[target['domain']]
+            self.safe_query_per_domain(res, target.domain, "get", self.BACKLINKS_ENDPOINT, query_params)
+            if not target.domain in res.failed_domains:
+                raw_result = res.results_by_domain[target.domain]
                 for linked_anchor in raw_result["backlinks"]:
                     linked_anchor["forbidden_word_category"] = None
                     anchor = linked_anchor["anchor"]
@@ -666,8 +673,13 @@ def cache(cache_name, results: Dict[str, Any], cache_dir: str = "cache") -> str:
     return cache_filepath
 
 
+def update_targets_with_lang(targets: list[TargetQueryableDomain], lang_by_domain) -> None:
+    for target in targets:
+        target.lang = lang_by_domain[target.domain]
+
+
 class DataExtractor:
-    def __init__(self) -> None:
+    def __init__(self, parallelization_level=50) -> None:
         project_root = os.path.abspath(os.getcwd())
         self.db_path = os.path.join(project_root, "ahrefs_data.db")
 
@@ -677,131 +689,133 @@ class DataExtractor:
             db_path=self.db_path  # SQLite database file path
         )
         self.similar_web_client = SimilarWebClient(api_token=os.environ.get("SIMILAR_WEB_KEY"))
+        self.parallelization_level = parallelization_level
+
+    def flusher_thread(self, analysis_id, done_domains, stop_event, interval=2):
+        while not stop_event.is_set():
+            time.sleep(interval)
+            count = len(done_domains)
+            get_thread_connection().execute(
+                "update analysis set processed_domains = ? where target_id = ?",
+                (count, analysis_id),
+            )
+            get_thread_connection().commit()
+            print(f"[Flusher] {analysis_id}: {count} domains completed")
+        # Final flush on stop
+        get_thread_connection().execute(
+            "update analysis set processed_domains = ? where target_id = ?",
+            (analysis_id, len(done_domains)),
+        )
+        get_thread_connection().commit()
 
     def run_extract(self, analysis: Analysis):
-        date_from = "2022-01-01"
-        query_date = date.today().strftime("%Y-%m-%d")
         target_id = analysis.target_id
 
         print(f"\nExtracting data for analysis {analysis.target_id}...")
-
-        client = AhrefsClient(
-            api_token=os.environ.get("AHREFS_API_TOKEN"),
-            db_path=self.db_path  # SQLite database file path
-        )
 
         # similar_web_client = SimilarWebClient(api_token=os.environ.get("SIMILAR_WEB_KEY"))
 
         # Initialize database (creates tables if they don't exist)
         print("Initializing database...")
-        conn = init_database()
         print("Database initialized successfully!")
 
-        # Create targets for analysis
-        # domains = [
-        #     'huleymantel.com',
-        #     'dimokratiki.gr',
-        #     'emprender-facil.com',
-        #     'nuevatribuna.es',
-        #     'tennisactu.net',
-        #     'netzpiloten.de',
-        #     'jugendleiter-blog.de',
-        #     'epiotrkow.pl',
-        #     'olaprasina1908.gr',
-        #     'elquindiano.com',
-        #     'eleftherostypos.gr',
-        #     'rondoniatual.com',
-        #     'tomsguide.com',
-        #     'techradar.com',
-        #     'diariodepontevedra.es',
-        #     'andaluciainformacion.es',
-        #     'zerozero.pt',
-        #     'bitchipdigital.com',
-        #     'novagente.pt',
-        #     'talkandroid.com',
-        #     'contentstudio.io',
-        #     'socialbee.com',
-        #     'aogmarket.jp',
-        #     'entamerush.jp',
-        #     'twipla.jp',
-        #     'esportenewsmundo.com.br',
-        #     'futebolinterior.com.br',
-        #     'marsicalive.it',
-        #     'newsmondo.it',
-        #     'iganony.co.uk',
-        #     'gazzettamatin.com',
-        #     'ciechanowinaczej.pl',
-        #     'resinet.pl',
-        #     'onevalefan.co.uk',
-        #     'galeriehandlowe.pl',
-        #     'gloswielkopolski.pl',
-        #     'dziennikzachodni.pl',
-        #     'gazetawroclawska.pl',
-        #     'digitalsynopsis.com',
-        #     'upbeatgeek.com',
-        #     'designveloper.com',
-        #     'theceoviews.com',
-        #     'studyhelp.de',
-        #     'daynight.gr',
-        #     'piotrkowtrybunalski.naszemiasto.pl',
-        #     'legnica.naszemiasto.pl',
-        #     'linfodrome.com',
-        #     'cyberpanel.net',
-        #     'lancelotdigital.com',
-        #     'murciatoday.com',
-        # ]
         domains = analysis.domains
-        targets = [
-            {
-                # "domain": "fmh.gr",
-                "domain": d.domain,
-                "mode": "subdomains",
-                "protocol": "both",
-            }
-            for d in domains]
+        target_queryable_domains = [TargetQueryableDomain(domain=d.domain) for d in domains]
         # sim_web_report_id = similar_web_client.submit_request_report([d['domain'] for d in targets])["report_id"]
         # {'report_id': '5b096600-2c1e-4d0b-9adb-f035baabfb94', 'status': 'pending'}
         # Perform batch analysis
         print("Querying batch analysis...")
-        batch_analysis_results = client.batch_analysis(targets=targets)
+        batch_analysis_results = self.ahrefs_client.batch_analysis(targets=target_queryable_domains)
         print("Saving batch analysis to database...")
         lang_by_domain = build_lang_by_domain(batch_analysis_results)
-        saved_target_ids = client.persist_batch_analysis(conn, target_id, batch_analysis_results, lang_by_domain)
+        saved_target_ids = self.ahrefs_client.persist_batch_analysis(db.db.get_thread_connection(), target_id,
+                                                                     batch_analysis_results,
+                                                                     lang_by_domain)
         print(f"Successfully saved {len(saved_target_ids)} records to database")
 
-        targets_with_lang = update_targets_with_lang(targets, lang_by_domain)
+        update_targets_with_lang(target_queryable_domains, lang_by_domain)
 
-        print("Querying metrics...")
-        res = client.query_metric_history(target_id=target_id, targets=targets_with_lang, date_from=date_from)
-        client.persist_metric_history(conn, target_id, res, None)
+        results, failures = self.process_all_domains(analysis.target_id, target_queryable_domains)
 
-        print("Querying top pages...")
-        res = client.query_top_pages(target_id, query_date, targets_with_lang)
-        client.persist_top_pages(conn, target_id, res, None, query_date)
-
-        # debug_requests_on()
-        category_forbidden_words_by_lang = {tgt["lang"]: {word: cat for cat in ["forbidden", "spam"] for word in
-                                                          get_disallowed_words_by_lang_fallback(get_disallowed_words(),
-                                                                                                tgt["lang"]).get(cat,
-                                                                                                                 [])}
-                                            for
-                                            tgt in targets_with_lang}
-        print("Querying forbidden_words in backlinks anchors...")
-        res = client.query_incoming_anchors_forbidden_words(target_id, category_forbidden_words_by_lang,
-                                                            targets_with_lang)
-        client.persist_incoming_anchors_forbidden_words(conn, target_id, res)
-
-        print("Querying forbidden_words in outgoing anchors...")
-        res = client.query_outgoing_anchors_forbidden_words(target_id, category_forbidden_words_by_lang,
-                                                            targets_with_lang)
-        client.persist_outgoing_anchors_forbidden_words(conn, target_id, res)
-
-        print("Querying forbidden_words in organic keywords...")
-        res = client.query_organic_keywords_forbidden_words(target_id, query_date, category_forbidden_words_by_lang,
-                                                            targets_with_lang)
-        client.persist_organic_keywords_forbiddne_words(conn, target_id, res, query_date)
-        print("ALL DATA EXTRACTED")
+        print(f"ALL DATA EXTRACTED, success: {len(results)} failures: {len(failures)}")
 
         # sim_web_report_id = "5b096600-2c1e-4d0b-9adb-f035baabfb94"
         # domain_categories = similar_web_client.download_report_as_domain_categories(sim_web_report_id)
         # db.persist_domain_categories(conn, target_id, domain_categories)
+
+    def process_all_domains(self, target_id, target_queryable_domains: List[TargetQueryableDomain]):
+        done_domains = set()
+        done_lock = threading.Lock()
+        stop_event = threading.Event()
+        flusher = threading.Thread(
+            target=self.flusher_thread,
+            args=(target_id, done_domains, stop_event),
+            daemon=True,
+        )
+        flusher.start()
+
+        results = []
+        failures = []
+
+        with ThreadPoolExecutor(max_workers=self.parallelization_level) as executor:
+            future_to_domain = {
+                executor.submit(self.process_single_domain, target_id, domain): domain
+                for domain in target_queryable_domains
+            }
+
+            for future in as_completed(future_to_domain):
+                domain = future_to_domain[future]
+                try:
+                    result = future.result()
+                    results.append((domain, result))
+                except Exception as e:
+                    print(traceback.format_exc())
+                    failures.append((domain, e))
+
+                finally:
+                    with done_lock:
+                        done_domains.add(domain)
+        stop_event.set()
+        flusher.join()
+        return results, failures
+
+    def process_single_domain(self, target_id: str,
+                              domain: TargetQueryableDomain):
+        date_from = "2022-01-01"
+        query_date = date.today().strftime("%Y-%m-%d")
+        client = self.ahrefs_client
+        conn = db.db.get_thread_connection()
+
+        target_queryable_domains = [domain]
+        print(f"{domain.domain}: Querying metrics...")
+        res = client.query_metric_history(target_id=target_id, targets=target_queryable_domains, date_from=date_from)
+        client.persist_metric_history(conn, target_id, res, None)
+
+        print(f"{domain.domain}: Querying top pages...")
+        res = client.query_top_pages(target_id, query_date, target_queryable_domains)
+        client.persist_top_pages(conn, target_id, res, None, query_date)
+
+        # debug_requests_on()
+        category_forbidden_words_by_lang = self.get_category_forbidden_words_by_lang(target_queryable_domains)
+        print(f"{domain.domain}: Querying forbidden_words in backlinks anchors...")
+        res = client.query_incoming_anchors_forbidden_words(target_id, category_forbidden_words_by_lang,
+                                                            target_queryable_domains)
+        client.persist_incoming_anchors_forbidden_words(conn, target_id, res)
+
+        print(f"{domain.domain}: Querying forbidden_words in outgoing anchors...")
+        res = client.query_outgoing_anchors_forbidden_words(target_id, category_forbidden_words_by_lang,
+                                                            target_queryable_domains)
+        client.persist_outgoing_anchors_forbidden_words(conn, target_id, res)
+
+        print(f"{domain.domain}: Querying forbidden_words in organic keywords...")
+        res = client.query_organic_keywords_forbidden_words(target_id, query_date, category_forbidden_words_by_lang,
+                                                            target_queryable_domains)
+        client.persist_organic_keywords_forbiddne_words(conn, target_id, res, query_date)
+        print(f"{domain.domain}: DONE")
+
+    def get_category_forbidden_words_by_lang(self, targets_with_lang: list[TargetQueryableDomain]):
+        category_forbidden_words_by_lang = {tgt.lang: {word: cat for cat in ["forbidden", "spam"] for word in
+                                                       get_disallowed_words_by_lang_fallback(get_disallowed_words(),
+                                                                                             tgt.lang).get(cat, [])}
+                                            for tgt in targets_with_lang}
+        return category_forbidden_words_by_lang

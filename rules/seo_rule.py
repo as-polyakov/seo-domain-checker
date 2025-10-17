@@ -1,10 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Literal
 
 import numpy as np
 from scipy.stats import linregress
+from scipy import signal
 
 import dao
 from dao import get_domain_dr, get_domain_traffic_by_country, get_domain_traffic_by_date, get_in_out_num_domains, \
@@ -12,6 +13,7 @@ from dao import get_domain_dr, get_domain_traffic_by_country, get_domain_traffic
 from db import db
 from model.models import RuleEvaluation
 from resources.disallowed_words import ForbiddenWordCategory
+from scipy.signal import find_peaks
 
 
 @dataclass
@@ -38,6 +40,13 @@ class SeoRule(ABC):
     @abstractmethod
     def eval(self, eval_context: EvalContext) -> RuleEvaluation:
         pass
+
+    def safe_eval(self, eval_context: EvalContext) -> RuleEvaluation:
+        try:
+            return self.eval(eval_context)
+        except Exception as e:
+            logging.warning(f"Rule {self.name} failed during evaluation for context {eval_context}: {e}")
+            return RuleEvaluation(eval_context.domain, self.name, score=0.0, critical_violation=False, details=str(e))
 
 
 class DomainRatingRule(SeoRule):
@@ -99,20 +108,20 @@ class HistoricalOrganicTrafficRule(SeoRule):
         self.decline_r2 = 0.7
 
     def has_traffic_spike(self, traffic_by_date: dict[str, int]) -> bool:
-        # Sort by date
-        dates = sorted(traffic_by_date.keys())
-        traffic = [traffic_by_date[d] for d in dates]
+        if not traffic_by_date or len(traffic_by_date) < 3:
+            return False
 
-        for i in range(len(traffic)):
-            if i >= 1:
-                prev = traffic[i - 1]
-                if prev > traffic[i] and abs(traffic[i] - prev) / prev > self.spike_threshold_1m:
-                    return True  # >20% between adjacent dates
-            if i >= 2:
-                prev2 = traffic[i - 2]
-                if prev2 > traffic[i] and abs(traffic[i] - prev2) / prev2 > self.spike_threshold_2m:
-                    return True  # >30% between one-apart dates
-        return False
+            # Sort by ISO date strings (lexicographically correct)
+        dates = sorted(traffic_by_date.keys())
+        values = np.array([traffic_by_date[d] for d in dates], dtype=int)
+
+        # Define a dynamic threshold
+        threshold = (np.max(values) - np.min(values)) / 3 + np.min(values)
+
+        # Detect peaks above threshold
+        peaks, _ = signal.find_peaks(values, threshold=threshold)
+
+        return peaks.size > 0
 
     def eval(self, eval_context: EvalContext) -> RuleEvaluation:
         traffic_by_date = get_domain_traffic_by_date(eval_context.target_id, eval_context.domain)

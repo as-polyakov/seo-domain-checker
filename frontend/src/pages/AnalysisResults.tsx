@@ -287,7 +287,7 @@ export default function AnalysisResults({ analysisId, onBack, DOMAINS }: {
                 <th className="w-10"></th>
                 <th className="w-10"></th>
                 <th className="text-left py-2 px-3 whitespace-nowrap">Domain</th>
-                <th className="text-right py-2 px-3 whitespace-nowrap" onClick={() => toggleSort('price')} style={{ cursor: 'pointer' }}>Price {sortIcon('price')}</th>
+                <th className="text-right py-2 px-3 whitespace-nowrap" onClick={() => toggleSort('price')} style={{ cursor: 'pointer' }}>Price, USD {sortIcon('price')}</th>
                 <th className="text-right py-2 px-3 whitespace-nowrap" onClick={() => toggleSort('total')} style={{ cursor: 'pointer' }}>Overall Score {sortIcon('total')}</th>
                 <th className="text-right py-2 px-3 whitespace-nowrap" onClick={() => toggleSort('dr')} style={{ cursor: 'pointer' }}>DR {sortIcon('dr')}</th>
                 <th className="text-right py-2 px-3 whitespace-nowrap">Organic Traffic<br />(by country)</th>
@@ -409,7 +409,31 @@ export default function AnalysisResults({ analysisId, onBack, DOMAINS }: {
                       </div>
                     </td>
                     {/* Status */}
-                    <td className="py-1 px-3 align-middle text-right" rowSpan={2}><Badge tone={d.status === 'OK' ? 'emerald' : d.status === 'Review' ? 'amber' : 'rose'}>{d.status}</Badge></td>
+                    <td className="py-1 px-3 align-middle text-right" rowSpan={2}>
+                      <div className="relative group inline-block">
+                        <Badge tone={d.status === 'OK' ? 'emerald' : d.status === 'Review' ? 'amber' : 'rose'}>
+                          {d.status}
+                        </Badge>
+                        {d.status === 'Reject' && d.criticalViolations && d.criticalViolations.length > 0 && (
+                          <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block z-50 w-64">
+                            <div className="bg-slate-900 text-white text-xs rounded-lg shadow-xl p-3 border border-slate-700">
+                              <div className="font-semibold mb-2 text-rose-300">Critical Violations:</div>
+                              <ul className="space-y-1">
+                                {d.criticalViolations.map((rule: string, idx: number) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <span className="text-rose-400 mt-0.5">•</span>
+                                    <span>{rule}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              <div className="absolute top-full right-4 -mt-1">
+                                <div className="border-8 border-transparent border-t-slate-900"></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     {/* Preview */}
                     <td className="py-1 px-3 align-middle text-right" rowSpan={2}>
                       <Button variant="secondary" size="sm" onClick={() => openPreview(d)}><Eye className="h-4 w-4" />Open</Button>
@@ -420,7 +444,7 @@ export default function AnalysisResults({ analysisId, onBack, DOMAINS }: {
                   <tr className="hover:bg-slate-50 border-t-0">
                     {/* Price - Details */}
                     <td className="py-1 px-3 align-top">
-                      <div className="text-xs text-slate-500">—</div>
+                      
                     </td>
                     {/* Overall Score - Details */}
                     <td className="py-1 px-3 align-top">

@@ -17,6 +17,7 @@ def get_domain_lang_by_top_traffic(top_country_by_traffic: List[List[str]]) -> s
 
 
 def get_domain_lang(domain: str, lang_by_traffic: str) -> str:
+    print(f"Get domain lang for {domain}")
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "

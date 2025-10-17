@@ -8,14 +8,14 @@ CREATE TABLE batch_analysis
 
     -- Core identifiers
     domain                  TEXT NOT NULL,
-    ip                      TEXT,             -- IP address as text
+    ip                      TEXT, -- IP address as text
     protocol                TEXT NOT NULL CHECK (protocol IN ('http', 'https', 'both')),
     mode                    TEXT NOT NULL,
 
     -- Rankings and ratings
     ahrefs_rank             INTEGER,
-    domain_rating           REAL,             -- up to 100.00 scale
-    url_rating              REAL,             -- up to 100.00 scale
+    domain_rating           REAL, -- up to 100.00 scale
+    url_rating              REAL, -- up to 100.00 scale
 
     -- Backlinks
     backlinks               INTEGER,
@@ -147,11 +147,12 @@ CREATE TABLE query_errors
 -- Table for top pages
 CREATE TABLE analysis
 (
-    target_id    TEXT NOT NULL,
-    name         TEXT, -- ISO country code (2 chars)
-    status       TEXT,
-    created_at   TEXT,
-    completed_at TEXT,
+    target_id         TEXT NOT NULL,
+    name              TEXT, -- ISO country code (2 chars)
+    status            TEXT,
+    processed_domains INTEGER default 0,
+    created_at        TEXT,
+    completed_at      TEXT,
     PRIMARY KEY (target_id)
 );
 
