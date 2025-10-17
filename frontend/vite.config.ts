@@ -9,12 +9,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
+    host: '0.0.0.0', // Allow access from network
+    // Proxy not needed - App.tsx uses dynamic API URLs based on window.location
   },
 })
 

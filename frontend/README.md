@@ -27,7 +27,7 @@ Start the development server (runs on http://localhost:3000):
 npm run dev
 ```
 
-The dev server includes a proxy to forward `/api` requests to the backend at `http://localhost:8000`.
+The dev server includes a proxy to forward `/api` requests to the backend at `http://192.168.0.11:8000`.
 
 ### Build for Production
 

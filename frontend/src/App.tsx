@@ -3,6 +3,14 @@ import AnalysisDashboard from "./pages/AnalysisDashboard";
 import AnalysisResults from "./pages/AnalysisResults";
 import { Analysis, AnalysisStatus, DomainData, DomainInput } from "./types";
 
+// ===== API Configuration =====
+const getApiBaseUrl = () => {
+  // Use the same hostname as the frontend, but with port 8000 for API
+  const protocol = window.location.protocol; // http: or https:
+  const hostname = window.location.hostname; // e.g., 192.168.0.11 or example.com
+  return `${protocol}//${hostname}:8000`;
+};
+
 // ===== Main App with Navigation =====
 export default function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'results'>('dashboard');
@@ -26,7 +34,8 @@ export default function App() {
 
   const fetchAnalyses = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/analyses');
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/analyses`);
       if (response.ok) {
         const data = await response.json();
         
@@ -53,7 +62,8 @@ export default function App() {
   const fetchAnalysisResults = async (analysisId: string) => {
     setIsLoadingResults(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/analyses-results/${analysisId}`);
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/analyses-results/${analysisId}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -124,7 +134,8 @@ export default function App() {
   const handleNewAnalysis = async (data: { name: string; domains: DomainInput[] }) => {
     try {
       // Call the backend API
-      const response = await fetch('http://localhost:8000/api/startAnalysis', {
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/startAnalysis`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
