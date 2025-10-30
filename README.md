@@ -1,6 +1,33 @@
-# Verseo - SEO Domain Checker
+# Domain Evaluation Tool
 
-A comprehensive SEO domain analysis tool with a beautiful React-based UI and Python backend for evaluating domain quality, safety, authority, and commercial potential.
+This repository contains an experimental tool for evaluating domain suitability
+for article publishing. It was independently developed by **Anton Polyakov**
+as a personal side project.
+
+During its development, a **temporary trial API key** was kindly provided by
+ahrefs Inc. in a partnership with Universe Group Inc. for evaluation purposes. In appreciation of that support, the
+source code is made publicly available under a **non-commercial license**.
+
+## License and Usage
+
+- Licensed under **MIT License with Commons Clause Restriction**.
+- **Commercial use, resale, or SaaS deployment is strictly prohibited**
+  without written permission from the author.
+- You may freely review, modify, or use this tool for internal or research
+  purposes.
+
+## Authorship and Acknowledgments
+
+- **Primary developer**: Anton Polyakov  
+- **Concept origin**: inspired by discussions with Natalya Oger  
+- **No employment or contractual relationship** existed between the author and Universe Group or
+  any other company during development.
+
+## Disclaimer
+
+This tool is provided for demonstration and research purposes only. It is not
+an official or supported product of [Company Name] or any affiliated entity.
+
 
 ## 🚀 Features
 
@@ -13,56 +40,7 @@ A comprehensive SEO domain analysis tool with a beautiful React-based UI and Pyt
 - **Preview Sidebar** - Quick evidence preview with anchors, backlinks, and keywords
 - **Batch Operations** - Select and update multiple domains at once
 
-## 📁 Project Structure
-
-```
-seo-domain-checker/
-├── api/                  # REST API module (NEW)
-│   ├── models.py        # Pydantic models
-│   ├── routes.py        # API endpoints
-│   ├── server.py        # FastAPI app
-│   └── analysis_service.py # Business logic
-├── frontend/             # React + TypeScript frontend
-│   ├── src/
-│   │   ├── App.tsx      # Main application component
-│   │   ├── main.tsx     # Entry point
-│   │   └── index.css    # Tailwind CSS styles
-│   ├── package.json     # Frontend dependencies
-│   └── vite.config.ts   # Vite configuration
-├── db/                  # Database layer
-├── extract/             # Data extraction utilities
-├── rules/               # SEO rule engine
-├── resources/           # Configuration files
-├── api_server.py        # API server entry point (NEW)
-├── main.py              # Analysis pipeline script
-├── requirements.txt     # Python dependencies
-├── start-dev.sh         # Unix/Mac startup script
-└── start-dev.bat        # Windows startup script
-```
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **Recharts** - Data visualization
-- **Lucide React** - Icons
-
-### Backend
-- **Python 3.x** - Backend language
-- **FastAPI** - REST API framework
-- **Uvicorn** - ASGI server
-- **Pydantic** - Data validation
-- **SQLite** - Database
-- **Alembic** - Database migrations
-
 ## 🚀 Quick Start
-
-> **New!** The app now includes a REST API for managing analysis sessions. See [API_INTEGRATION.md](API_INTEGRATION.md) for details.
-
-
 
 ### Prerequisites
 
@@ -226,7 +204,8 @@ pytest tests/
 
 ## 📄 License
 
-This project is proprietary software.
+This project is released under the MIT License with Commons Clause Restriction (non-commercial use only).
+See the LICENSE file for details.
 
 ## 🔗 Useful Links
 
