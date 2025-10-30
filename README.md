@@ -4,9 +4,7 @@ This repository contains an experimental tool for evaluating domain suitability
 for article publishing. It was independently developed by **Anton Polyakov**
 as a personal side project.
 
-During its development, a **temporary trial API key** was kindly provided by
-ahrefs Inc. in a partnership with Universe Group Inc. for evaluation purposes. In appreciation of that support, the
-source code is made publicly available under a **non-commercial license**.
+The source code is made publicly available under a **non-commercial license**.
 
 ## License and Usage
 
