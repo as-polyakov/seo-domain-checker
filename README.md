@@ -17,7 +17,7 @@ The source code is made publicly available under a **non-commercial license**.
 ## Authorship and Acknowledgments
 
 - **Primary developer**: Anton Polyakov  
-- **Concept origin**: inspired by discussions with Natalya Oger  
+- **Concept origin**: inspired by discussions with Nataliia Oher
 - **No employment or contractual relationship** existed between the author and Universe Group or
   any other company during development.
 
