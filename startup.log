@@ -1,0 +1,118 @@
+🚀 Starting Verseo SEO Domain Checker...
+
+⚠️  Virtual environment not found. Creating one...
+Requirement already satisfied: aiohttp==3.13.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 1)) (3.13.2)
+Requirement already satisfied: alembic==1.16.5 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 2)) (1.16.5)
+Requirement already satisfied: beautifulsoup4==4.14.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 3)) (4.14.2)
+Requirement already satisfied: bs4==0.0.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 4)) (0.0.2)
+Requirement already satisfied: certifi==2025.10.5 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 5)) (2025.10.5)
+Requirement already satisfied: charset-normalizer==3.4.3 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 6)) (3.4.3)
+Requirement already satisfied: click==8.3.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 7)) (8.3.0)
+Requirement already satisfied: fastapi==0.115.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 8)) (0.115.0)
+Requirement already satisfied: idna==3.10 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 9)) (3.10)
+Requirement already satisfied: lingua-language-detector==2.1.1 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 10)) (2.1.1)
+Requirement already satisfied: Mako==1.3.10 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 11)) (1.3.10)
+Requirement already satisfied: MarkupSafe==3.0.3 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 12)) (3.0.3)
+Requirement already satisfied: numpy==2.3.4 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 13)) (2.3.4)
+Requirement already satisfied: polib==1.2.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 14)) (1.2.0)
+Requirement already satisfied: pydantic==2.9.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 15)) (2.9.0)
+Requirement already satisfied: python-dotenv==1.0.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 16)) (1.0.0)
+Requirement already satisfied: PyYAML==6.0.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 17)) (6.0.2)
+Requirement already satisfied: requests==2.32.5 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 18)) (2.32.5)
+Requirement already satisfied: scipy==1.16.3 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 19)) (1.16.3)
+Requirement already satisfied: soupsieve==2.8 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 20)) (2.8)
+Requirement already satisfied: SQLAlchemy==2.0.43 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 21)) (2.0.43)
+Requirement already satisfied: tenacity==9.1.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 22)) (9.1.2)
+Requirement already satisfied: tomli==2.2.1 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 23)) (2.2.1)
+Requirement already satisfied: typing_extensions==4.15.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 24)) (4.15.0)
+Requirement already satisfied: urllib3==2.5.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 25)) (2.5.0)
+Requirement already satisfied: uvicorn==0.32.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from -r requirements.txt (line 26)) (0.32.0)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (6.7.0)
+Requirement already satisfied: propcache>=0.2.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from aiohttp==3.13.2->-r requirements.txt (line 1)) (1.22.0)
+Requirement already satisfied: starlette<0.39.0,>=0.37.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from fastapi==0.115.0->-r requirements.txt (line 8)) (0.38.6)
+Requirement already satisfied: annotated-types>=0.4.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from pydantic==2.9.0->-r requirements.txt (line 15)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.23.2 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from pydantic==2.9.0->-r requirements.txt (line 15)) (2.23.2)
+Requirement already satisfied: tzdata in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from pydantic==2.9.0->-r requirements.txt (line 15)) (2025.2)
+Requirement already satisfied: h11>=0.8 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from uvicorn==0.32.0->-r requirements.txt (line 26)) (0.16.0)
+Requirement already satisfied: anyio<5,>=3.4.0 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from starlette<0.39.0,>=0.37.2->fastapi==0.115.0->-r requirements.txt (line 8)) (4.11.0)
+Requirement already satisfied: sniffio>=1.1 in /Users/mykola.movchan/seo-domain-checker/venv/lib/python3.13/site-packages (from anyio<5,>=3.4.0->starlette<0.39.0,>=0.37.2->fastapi==0.115.0->-r requirements.txt (line 8)) (1.3.1)
+
+[notice] A new release of pip is available: 24.3.1 -> 25.3
+[notice] To update, run: python3.13 -m pip install --upgrade pip
+✅ Dependencies ready
+
+🐍 Starting Python API server on http://localhost:8000...
+INFO:     Will watch for changes in these directories: ['/Users/mykola.movchan/seo-domain-checker-1']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [63356] using StatReload
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/process.py", line 313, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+    ~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/server.py", line 65, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/server.py", line 69, in serve
+    await self._serve(sockets)
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/server.py", line 76, in _serve
+    config.load()
+    ~~~~~~~~~~~^^
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/config.py", line 434, in load
+    self.loaded_app = import_from_string(self.app)
+                      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/importer.py", line 22, in import_from_string
+    raise exc from None
+  File "/Users/mykola.movchan/seo-domain-checker-1/venv/lib/python3.13/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/mykola.movchan/seo-domain-checker-1/api/server.py", line 7, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
+⚛️  Starting React frontend on http://localhost:3000...
+
+✨ Services started successfully!
+
+📍 Frontend: http://localhost:3000
+📍 Backend:  http://localhost:8000
+
+Press Ctrl+C to stop all services
+
+
+> verseo-frontend@0.0.1 dev
+> vite --host
+
+Port 3000 is in use, trying another one...
+
+  VITE v5.4.20  ready in 207 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: http://192.168.1.103:3001/

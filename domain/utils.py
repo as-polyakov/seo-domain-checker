@@ -29,7 +29,28 @@ def get_disallowed_words_by_lang_fallback(disallowed_words_by_lang: Dict[str, Di
 
 
 def _safe_int(value) -> Optional[int]:
-    return int(value) if value else None
+    """Convert value to int, handling currency formatting like $250 or 1,250"""
+    if not value:
+        return None
+    
+    # Convert to string if not already
+    str_value = str(value).strip()
+    
+    # Remove currency symbols ($, €, £, etc.) and whitespace
+    str_value = str_value.replace('$', '').replace('€', '').replace('£', '').replace('¥', '')
+    
+    # Remove commas used as thousand separators
+    str_value = str_value.replace(',', '').strip()
+    
+    # Handle empty string after cleaning
+    if not str_value:
+        return None
+    
+    try:
+        return int(float(str_value))  # Use float() first to handle decimals like "250.00"
+    except (ValueError, TypeError):
+        logger.warning(f"Could not convert '{value}' to int, returning None")
+        return None
 
 
 def _safe_float(value) -> Optional[float]:

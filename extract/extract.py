@@ -204,12 +204,20 @@ class AhrefsClient:
         self.timeout = timeout
         self.session = requests.Session()
 
+        # Log API token info (first/last 4 chars only for security)
+        if api_token:
+            token_preview = f"{api_token[:4]}...{api_token[-4:]}" if len(api_token) > 8 else "***"
+            logging.info(f"🔑 AhrefsClient initialized with token: {token_preview}")
+        else:
+            logging.warning(f"⚠️  AhrefsClient initialized with NO TOKEN!")
+
         # Set default headers
         self.session.headers.update({
             'Accept': 'application/json, application/xml',
             'Authorization': f'Bearer {api_token}',
             'Content-Type': 'application/json'
         })
+        logging.info(f"✅ Ahrefs session headers configured")
 
     def record_failures(fn):
         @functools.wraps(fn)
@@ -235,6 +243,9 @@ class AhrefsClient:
 
     def batch_analysis(self,
                        targets: List[TargetQueryableDomain]) -> Dict[str, Any]:
+        logging.info(f"🌐 Preparing Ahrefs batch analysis request for {len(targets)} domains...")
+        logging.info(f"   Domains: {[t.domain for t in targets]}")
+        
         select = [
             "ahrefs_rank",
             "backlinks",
@@ -278,8 +289,16 @@ class AhrefsClient:
             "targets": [{"url": d.domain, "mode": d.mode, "protocol": d.protocol} for d in targets],
             "select": select
         }
-
-        return sanitize_url_to_domain(self.unsafe_query("post", self.BATCH_ANALYSIS_ENDPOINT, payload))
+        
+        logging.info(f"📤 Sending POST request to {self.BASE_URL}{self.BATCH_ANALYSIS_ENDPOINT}")
+        try:
+            result = sanitize_url_to_domain(self.unsafe_query("post", self.BATCH_ANALYSIS_ENDPOINT, payload))
+            logging.info(f"✅ Batch analysis request successful!")
+            return result
+        except Exception as e:
+            logging.error(f"❌ Batch analysis request failed: {str(e)}")
+            logging.error(f"   Error type: {type(e).__name__}")
+            raise
 
     def query_organic_keywords_forbidden_words(self, target_id, date: str,
                                                forbidden_class_by_forbidden_word_by_lang: Dict[str, Dict[str, str]],

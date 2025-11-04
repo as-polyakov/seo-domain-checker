@@ -4,10 +4,6 @@ FastAPI server for SEO Domain Checker API
 import logging
 import sys
 import traceback
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
