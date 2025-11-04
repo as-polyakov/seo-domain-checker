@@ -757,12 +757,47 @@ class DataExtractor:
 
         domains = analysis.domains
         target_queryable_domains = [TargetQueryableDomain(domain=d.domain) for d in domains]
+        print(f"Target domains: {[d.domain for d in target_queryable_domains]}", flush=True)
         # sim_web_report_id = similar_web_client.submit_request_report([d['domain'] for d in targets])["report_id"]
         # {'report_id': '5b096600-2c1e-4d0b-9adb-f035baabfb94', 'status': 'pending'}
-        # Perform batch analysis
-        print("Querying batch analysis...")
-        batch_analysis_results = self.ahrefs_client.batch_analysis(targets=target_queryable_domains)
-        print("Saving batch analysis to database...")
+        
+        # Split large batches into smaller chunks (Ahrefs API works better with smaller batches)
+        BATCH_SIZE = 10  # Process 10 domains at a time
+        total_domains = len(target_queryable_domains)
+        
+        if total_domains > BATCH_SIZE:
+            print(f"🔍 Large batch detected ({total_domains} domains). Splitting into chunks of {BATCH_SIZE}...", flush=True)
+            all_targets = []  # Collect all targets from chunks
+            
+            for i in range(0, total_domains, BATCH_SIZE):
+                chunk = target_queryable_domains[i:i+BATCH_SIZE]
+                chunk_num = (i // BATCH_SIZE) + 1
+                total_chunks = (total_domains + BATCH_SIZE - 1) // BATCH_SIZE
+                
+                print(f"📦 Processing chunk {chunk_num}/{total_chunks} ({len(chunk)} domains)...", flush=True)
+                try:
+                    chunk_results = self.ahrefs_client.batch_analysis(targets=chunk)
+                    if chunk_results and 'targets' in chunk_results:
+                        all_targets.extend(chunk_results['targets'])
+                    print(f"✅ Chunk {chunk_num}/{total_chunks} completed", flush=True)
+                except Exception as e:
+                    print(f"❌ Chunk {chunk_num}/{total_chunks} failed: {e}", flush=True)
+                    raise
+            
+            # Combine all chunks into single result structure
+            batch_analysis_results = {'targets': all_targets}
+            print(f"✅ All chunks completed! Total results: {len(all_targets)}", flush=True)
+        else:
+            # Small batch - process normally
+            print("🔍 Querying Ahrefs batch analysis API...", flush=True)
+            try:
+                batch_analysis_results = self.ahrefs_client.batch_analysis(targets=target_queryable_domains)
+                print(f"✅ Batch analysis API returned {len(batch_analysis_results) if batch_analysis_results else 0} results", flush=True)
+            except Exception as e:
+                print(f"❌ Batch analysis API failed: {e}", flush=True)
+                raise
+        
+        print("💾 Saving batch analysis to database...", flush=True)
         lang_by_domain = build_lang_by_domain(batch_analysis_results)
         saved_target_ids = self.ahrefs_client.persist_batch_analysis(db.db.get_thread_connection(), target_id,
                                                                      batch_analysis_results,

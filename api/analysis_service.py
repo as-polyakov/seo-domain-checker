@@ -73,21 +73,30 @@ def list_analyses() -> List[AnalysisResponse]:
 
 
 def run_analysis(analysis: Analysis):
+    print(f"🚀 BACKGROUND THREAD: Starting analysis {analysis.target_id}", flush=True)
+    print(f"   Analysis name: {analysis.name}", flush=True)
+    print(f"   Total domains: {len(analysis.domains)}", flush=True)
     logger.info(f"🚀 BACKGROUND THREAD: Starting analysis {analysis.target_id}")
     logger.info(f"   Analysis name: {analysis.name}")
     logger.info(f"   Total domains: {len(analysis.domains)}")
     
     try:
+        print(f"📝 Updating status to RUNNING...", flush=True)
         logger.info(f"📝 Updating status to RUNNING...")
         dao.update_analysis_status(analysis.target_id, AnalysisStatus.RUNNING)
+        print(f"✅ Status updated to RUNNING", flush=True)
         logger.info(f"✅ Status updated to RUNNING")
         
+        print(f"🔍 Initializing DataExtractor...", flush=True)
         logger.info(f"🔍 Initializing DataExtractor...")
         data_extractor = DataExtractor()
+        print(f"✅ DataExtractor initialized", flush=True)
         logger.info(f"✅ DataExtractor initialized")
         
+        print(f"📊 Starting data extraction for {len(analysis.domains)} domains...", flush=True)
         logger.info(f"📊 Starting data extraction for {len(analysis.domains)} domains...")
         data_extractor.run_extract(analysis)
+        print(f"✅ Data extraction completed", flush=True)
         logger.info(f"✅ Data extraction completed")
         
         logger.info(f"📏 Evaluating rules for all domains...")
@@ -104,9 +113,14 @@ def run_analysis(analysis: Analysis):
         logger.info(f"🎉 Analysis {analysis.target_id} completed successfully!")
         
     except Exception as e:
+        print(f"❌ ERROR in analysis {analysis.target_id}: {str(e)}", flush=True)
+        print(f"   Exception type: {type(e).__name__}", flush=True)
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"   Traceback:\n{error_trace}", flush=True)
         logger.error(f"❌ ERROR in analysis {analysis.target_id}: {str(e)}")
         logger.error(f"   Exception type: {type(e).__name__}")
-        import traceback
-        logger.error(f"   Traceback:\n{traceback.format_exc()}")
+        logger.error(f"   Traceback:\n{error_trace}")
         dao.update_analysis_status(analysis.target_id, AnalysisStatus.FAILED)
+        print(f"   Status updated to FAILED", flush=True)
         logger.error(f"   Status updated to FAILED")

@@ -4,6 +4,5 @@ cache/
 __pycache__/
 *.pyc
 .idea/
-backend.log
 frontend.log
 .env

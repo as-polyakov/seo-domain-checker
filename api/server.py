@@ -1,6 +1,9 @@
 """
 FastAPI server for SEO Domain Checker API
 """
+# Load config first to initialize environment variables
+import config
+
 import logging
 import sys
 import traceback
@@ -12,6 +15,16 @@ import db.db
 from api.routes import router
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
+
+# Configure logging to file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('backend.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
 # Create FastAPI app
 app = FastAPI(
