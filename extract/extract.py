@@ -680,14 +680,31 @@ def update_targets_with_lang(targets: list[TargetQueryableDomain], lang_by_domai
 
 class DataExtractor:
     def __init__(self, parallelization_level=50) -> None:
+        import logging
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Initializing DataExtractor...")
+
         project_root = os.path.abspath(os.getcwd())
+        self.logger.info(f"Project root determined as: {project_root}")
+
         self.db_path = os.path.join(project_root, "ahrefs_data.db")
+        self.logger.info(f"Database path set to: {self.db_path}")
 
         self.cache_dir = os.path.join(project_root, "cache")
+        self.logger.info(f"Cache directory set to: {self.cache_dir}")
+
+        ahrefs_api_token = os.environ.get("AHREFS_API_TOKEN")
+        self.logger.info(f"AHREFS_API_TOKEN key: {'SET' if ahrefs_api_token else 'NOT SET'}")
         self.ahrefs_client = AhrefsClient(
-            api_token=os.environ.get("AHREFS_API_TOKEN"),
+            api_token=ahrefs_api_token,
             db_path=self.db_path  # SQLite database file path
         )
+        self.logger.info("AhrefsClient initialized.")
+
+        # For completeness, log about SimilarWeb key as well (if it will be used in this class)
+        similarweb_key = os.environ.get("SIMILAR_WEB_KEY")
+        self.logger.info(f"SIMILAR_WEB_KEY: {'SET' if similarweb_key else 'NOT SET'}")
+
         self.similar_web_client = SimilarWebClient(api_token=os.environ.get("SIMILAR_WEB_KEY"))
         self.parallelization_level = parallelization_level
 

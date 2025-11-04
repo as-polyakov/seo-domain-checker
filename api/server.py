@@ -4,6 +4,10 @@ FastAPI server for SEO Domain Checker API
 import logging
 import sys
 import traceback
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +36,14 @@ app.add_middleware(
 
 # Include routes
 app.include_router(router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    print("🚀 Initializing database...")
+    db.db.init_database()
+    print("✅ Database initialized successfully")
 
 
 @app.get("/", tags=["health"])
