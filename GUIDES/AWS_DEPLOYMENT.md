@@ -8,26 +8,7 @@
 
 ---
 
-## EC2 Instance Setup
-
-### 1. Initial Setup
-
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Python 3.13
-sudo apt install python3.13 python3.13-venv python3-pip -y
-
-# Install Node.js 20.x
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install nodejs -y
-
-# Install Git
-sudo apt install git -y
-```
-
-### 2. Clone & Setup Project
+### 1. Clone & Setup Project
 
 ```bash
 # Clone repository
@@ -46,7 +27,7 @@ npm run build
 cd ..
 ```
 
-### 3. Database Initialization
+### 2. Database Initialization
 
 ```bash
 # Database will auto-initialize on first backend run via Alembic migrations
@@ -139,80 +120,3 @@ sudo systemctl restart nginx
 ```
 
 ---
-
-## Security Groups (AWS)
-
-**Inbound Rules:**
-
-- Port 80 (HTTP) - 0.0.0.0/0
-- Port 443 (HTTPS) - 0.0.0.0/0
-- Port 22 (SSH) - Your IP only
-
-**Note:** Ports 3000 and 8000 should NOT be exposed directly. Nginx handles all traffic.
-
----
-
-## Monitoring & Logs
-
-```bash
-# Backend logs
-sudo journalctl -u verseo-backend -f
-
-# Nginx logs
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
-
-# Backend application log
-tail -f /opt/verseo/backend.log
-```
-
----
-
-## Quick Commands
-
-```bash
-# Restart backend
-sudo systemctl restart verseo-backend
-
-# Rebuild frontend after changes
-cd /opt/verseo/frontend
-npm run build
-sudo systemctl reload nginx
-
-# Check backend health
-curl http://localhost:8000/health
-
-# Database backup
-cp /opt/verseo/ahrefs_data.db /opt/verseo/backups/ahrefs_data_$(date +%Y%m%d).db
-```
-
----
-
-## Development Mode (Optional)
-
-For testing on EC2:
-
-```bash
-cd /opt/verseo
-
-# Backend (terminal 1)
-source venv/bin/activate
-python api_server.py
-
-# Frontend dev server (terminal 2)
-cd frontend
-npm run dev
-```
-
-Frontend: http://<ec2-ip>:3000  
-Backend API: http://<ec2-ip>:8000
-
----
-
-## Notes
-
-- Frontend automatically detects API URL based on hostname (uses port 8000)
-- SQLite database is file-based, suitable for small-medium traffic
-- For high traffic, consider migrating to PostgreSQL/RDS
-- No environment variables currently required
-- Alembic handles database schema migrations automatically
