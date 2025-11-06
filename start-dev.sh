@@ -19,13 +19,13 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Check if Python backend dependencies are installed
-if [ ! -d ".venv" ]; then
+if [ ! -d "venv" ]; then
     echo "⚠️  Virtual environment not found. Creating one..."
     python3 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
 else
-    source .venv/bin/activate
+    source venv/bin/activate
 fi
 
 # Check if Node modules are installed

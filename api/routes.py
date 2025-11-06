@@ -1,6 +1,7 @@
 """
 API routes for SEO Domain Checker
 """
+import logging
 import traceback
 from functools import wraps
 from typing import List, Callable, Any
@@ -20,6 +21,9 @@ from api.models import (
 )
 from db.db import LinkDirection
 from resources.disallowed_words import ForbiddenWordCategory
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analysis"])
 
@@ -63,7 +67,12 @@ def handle_exceptions(func: Callable) -> Callable:
 )
 @handle_exceptions
 async def start_analysis(request: StartAnalysisRequest):
+    logger.info(f"📁 Received startAnalysis request: name='{request.name}', domains={len(request.domains)}")
+    logger.info(f"   Domains: {[d.domain for d in request.domains]}")
+    
     analysis = create_analysis(request)
+    
+    logger.info(f"✅ Analysis created successfully: id={analysis.id}, status={analysis.status}")
     return analysis
 
 

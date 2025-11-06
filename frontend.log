@@ -1,0 +1,16 @@
+
+> verseo-frontend@0.0.1 dev
+> vite --host --host
+
+
+  VITE v5.4.20  ready in 205 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://192.168.1.103:3000/
+5:01:32 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:01:44 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:01:52 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:01:59 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:02:06 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:02:23 PM [vite] hmr update /src/App.tsx, /src/index.css
+5:07:28 PM [vite] hmr update /src/App.tsx, /src/index.css

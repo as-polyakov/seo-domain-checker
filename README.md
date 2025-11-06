@@ -20,7 +20,7 @@ The source code is made publicly available under a **non-commercial license**.
 - **Concept origin**: inspired by discussions with Nataliia Oher
 - **No employment or contractual relationship** existed between the author and Universe Group or
   any other company during development.
-
+ 
 ## Disclaimer
 
 This tool is provided for demonstration and research purposes only. It is not

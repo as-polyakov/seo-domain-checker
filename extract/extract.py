@@ -204,12 +204,20 @@ class AhrefsClient:
         self.timeout = timeout
         self.session = requests.Session()
 
+        # Log API token info (first/last 4 chars only for security)
+        if api_token:
+            token_preview = f"{api_token[:4]}...{api_token[-4:]}" if len(api_token) > 8 else "***"
+            logging.info(f"🔑 AhrefsClient initialized with token: {token_preview}")
+        else:
+            logging.warning(f"⚠️  AhrefsClient initialized with NO TOKEN!")
+
         # Set default headers
         self.session.headers.update({
             'Accept': 'application/json, application/xml',
             'Authorization': f'Bearer {api_token}',
             'Content-Type': 'application/json'
         })
+        logging.info(f"✅ Ahrefs session headers configured")
 
     def record_failures(fn):
         @functools.wraps(fn)
@@ -235,6 +243,9 @@ class AhrefsClient:
 
     def batch_analysis(self,
                        targets: List[TargetQueryableDomain]) -> Dict[str, Any]:
+        logging.info(f"🌐 Preparing Ahrefs batch analysis request for {len(targets)} domains...")
+        logging.info(f"   Domains: {[t.domain for t in targets]}")
+        
         select = [
             "ahrefs_rank",
             "backlinks",
@@ -278,8 +289,16 @@ class AhrefsClient:
             "targets": [{"url": d.domain, "mode": d.mode, "protocol": d.protocol} for d in targets],
             "select": select
         }
-
-        return sanitize_url_to_domain(self.unsafe_query("post", self.BATCH_ANALYSIS_ENDPOINT, payload))
+        
+        logging.info(f"📤 Sending POST request to {self.BASE_URL}{self.BATCH_ANALYSIS_ENDPOINT}")
+        try:
+            result = sanitize_url_to_domain(self.unsafe_query("post", self.BATCH_ANALYSIS_ENDPOINT, payload))
+            logging.info(f"✅ Batch analysis request successful!")
+            return result
+        except Exception as e:
+            logging.error(f"❌ Batch analysis request failed: {str(e)}")
+            logging.error(f"   Error type: {type(e).__name__}")
+            raise
 
     def query_organic_keywords_forbidden_words(self, target_id, date: str,
                                                forbidden_class_by_forbidden_word_by_lang: Dict[str, Dict[str, str]],
@@ -680,14 +699,31 @@ def update_targets_with_lang(targets: list[TargetQueryableDomain], lang_by_domai
 
 class DataExtractor:
     def __init__(self, parallelization_level=50) -> None:
+        import logging
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Initializing DataExtractor...")
+
         project_root = os.path.abspath(os.getcwd())
+        self.logger.info(f"Project root determined as: {project_root}")
+
         self.db_path = os.path.join(project_root, "ahrefs_data.db")
+        self.logger.info(f"Database path set to: {self.db_path}")
 
         self.cache_dir = os.path.join(project_root, "cache")
+        self.logger.info(f"Cache directory set to: {self.cache_dir}")
+
+        ahrefs_api_token = os.environ.get("AHREFS_API_TOKEN")
+        self.logger.info(f"AHREFS_API_TOKEN key: {'SET' if ahrefs_api_token else 'NOT SET'}")
         self.ahrefs_client = AhrefsClient(
-            api_token=os.environ.get("AHREFS_API_TOKEN"),
+            api_token=ahrefs_api_token,
             db_path=self.db_path  # SQLite database file path
         )
+        self.logger.info("AhrefsClient initialized.")
+
+        # For completeness, log about SimilarWeb key as well (if it will be used in this class)
+        similarweb_key = os.environ.get("SIMILAR_WEB_KEY")
+        self.logger.info(f"SIMILAR_WEB_KEY: {'SET' if similarweb_key else 'NOT SET'}")
+
         self.similar_web_client = SimilarWebClient(api_token=os.environ.get("SIMILAR_WEB_KEY"))
         self.parallelization_level = parallelization_level
 
@@ -721,12 +757,47 @@ class DataExtractor:
 
         domains = analysis.domains
         target_queryable_domains = [TargetQueryableDomain(domain=d.domain) for d in domains]
+        print(f"Target domains: {[d.domain for d in target_queryable_domains]}", flush=True)
         # sim_web_report_id = similar_web_client.submit_request_report([d['domain'] for d in targets])["report_id"]
         # {'report_id': '5b096600-2c1e-4d0b-9adb-f035baabfb94', 'status': 'pending'}
-        # Perform batch analysis
-        print("Querying batch analysis...")
-        batch_analysis_results = self.ahrefs_client.batch_analysis(targets=target_queryable_domains)
-        print("Saving batch analysis to database...")
+        
+        # Split large batches into smaller chunks (Ahrefs API works better with smaller batches)
+        BATCH_SIZE = 10  # Process 10 domains at a time
+        total_domains = len(target_queryable_domains)
+        
+        if total_domains > BATCH_SIZE:
+            print(f"🔍 Large batch detected ({total_domains} domains). Splitting into chunks of {BATCH_SIZE}...", flush=True)
+            all_targets = []  # Collect all targets from chunks
+            
+            for i in range(0, total_domains, BATCH_SIZE):
+                chunk = target_queryable_domains[i:i+BATCH_SIZE]
+                chunk_num = (i // BATCH_SIZE) + 1
+                total_chunks = (total_domains + BATCH_SIZE - 1) // BATCH_SIZE
+                
+                print(f"📦 Processing chunk {chunk_num}/{total_chunks} ({len(chunk)} domains)...", flush=True)
+                try:
+                    chunk_results = self.ahrefs_client.batch_analysis(targets=chunk)
+                    if chunk_results and 'targets' in chunk_results:
+                        all_targets.extend(chunk_results['targets'])
+                    print(f"✅ Chunk {chunk_num}/{total_chunks} completed", flush=True)
+                except Exception as e:
+                    print(f"❌ Chunk {chunk_num}/{total_chunks} failed: {e}", flush=True)
+                    raise
+            
+            # Combine all chunks into single result structure
+            batch_analysis_results = {'targets': all_targets}
+            print(f"✅ All chunks completed! Total results: {len(all_targets)}", flush=True)
+        else:
+            # Small batch - process normally
+            print("🔍 Querying Ahrefs batch analysis API...", flush=True)
+            try:
+                batch_analysis_results = self.ahrefs_client.batch_analysis(targets=target_queryable_domains)
+                print(f"✅ Batch analysis API returned {len(batch_analysis_results) if batch_analysis_results else 0} results", flush=True)
+            except Exception as e:
+                print(f"❌ Batch analysis API failed: {e}", flush=True)
+                raise
+        
+        print("💾 Saving batch analysis to database...", flush=True)
         lang_by_domain = build_lang_by_domain(batch_analysis_results)
         saved_target_ids = self.ahrefs_client.persist_batch_analysis(db.db.get_thread_connection(), target_id,
                                                                      batch_analysis_results,

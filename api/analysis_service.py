@@ -1,6 +1,7 @@
 """
 Service layer for analysis operations
 """
+import logging
 import threading
 import uuid
 from datetime import datetime
@@ -14,12 +15,20 @@ from model.models import AnalysisDomain
 from rules.rule_aggregator import evaluate_domain
 from utils import _safe_int
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 
 def create_analysis(request: StartAnalysisRequest) -> AnalysisResponse:
     analysis_id = str(uuid.uuid4())
+    logger.info(f"🆕 Creating new analysis: id={analysis_id}, name='{request.name}'")
+    
     res = Analysis(analysis_id, request.name, AnalysisStatus.PENDING, datetime.now(), None,
                    [AnalysisDomain(d.domain, _safe_int(d.price), d.notes) for d in request.domains], 0)
+    
+    logger.info(f"💾 Persisting analysis to database...")
     dao.persist_analysis(res)
+    logger.info(f"✅ Analysis persisted successfully")
 
     analysis_data = {
         "id": analysis_id,
@@ -32,9 +41,11 @@ def create_analysis(request: StartAnalysisRequest) -> AnalysisResponse:
     }
 
     # Start analysis in background thread
+    logger.info(f"🔄 Starting background processing thread for analysis {analysis_id}")
     thread = threading.Thread(target=run_analysis, args=(res,))
     thread.daemon = True
     thread.start()
+    logger.info(f"✅ Background thread started")
 
     return AnalysisResponse(**analysis_data)
 
@@ -62,12 +73,54 @@ def list_analyses() -> List[AnalysisResponse]:
 
 
 def run_analysis(analysis: Analysis):
-    dao.update_analysis_status(analysis.target_id, AnalysisStatus.RUNNING)
-    data_extractor = DataExtractor()
-    data_extractor.run_extract(analysis)
-    eval_results = [evaluate_domain(analysis.target_id, domain.domain)
-                    for domain in analysis.domains]
+    print(f"🚀 BACKGROUND THREAD: Starting analysis {analysis.target_id}", flush=True)
+    print(f"   Analysis name: {analysis.name}", flush=True)
+    print(f"   Total domains: {len(analysis.domains)}", flush=True)
+    logger.info(f"🚀 BACKGROUND THREAD: Starting analysis {analysis.target_id}")
+    logger.info(f"   Analysis name: {analysis.name}")
+    logger.info(f"   Total domains: {len(analysis.domains)}")
+    
+    try:
+        print(f"📝 Updating status to RUNNING...", flush=True)
+        logger.info(f"📝 Updating status to RUNNING...")
+        dao.update_analysis_status(analysis.target_id, AnalysisStatus.RUNNING)
+        print(f"✅ Status updated to RUNNING", flush=True)
+        logger.info(f"✅ Status updated to RUNNING")
+        
+        print(f"🔍 Initializing DataExtractor...", flush=True)
+        logger.info(f"🔍 Initializing DataExtractor...")
+        data_extractor = DataExtractor()
+        print(f"✅ DataExtractor initialized", flush=True)
+        logger.info(f"✅ DataExtractor initialized")
+        
+        print(f"📊 Starting data extraction for {len(analysis.domains)} domains...", flush=True)
+        logger.info(f"📊 Starting data extraction for {len(analysis.domains)} domains...")
+        data_extractor.run_extract(analysis)
+        print(f"✅ Data extraction completed", flush=True)
+        logger.info(f"✅ Data extraction completed")
+        
+        logger.info(f"📏 Evaluating rules for all domains...")
+        eval_results = [evaluate_domain(analysis.target_id, domain.domain)
+                        for domain in analysis.domains]
+        logger.info(f"✅ Rule evaluation completed for all domains")
 
-    dao.persist_rule_evaluations(analysis.target_id, eval_results)
-    dao.update_analysis_status(analysis.target_id, AnalysisStatus.COMPLETED)
-    print(f"Analysis {analysis.target_id} completed successfully")
+        logger.info(f"💾 Persisting rule evaluation results...")
+        dao.persist_rule_evaluations(analysis.target_id, eval_results)
+        logger.info(f"✅ Rule results persisted")
+        
+        logger.info(f"📝 Updating status to COMPLETED...")
+        dao.update_analysis_status(analysis.target_id, AnalysisStatus.COMPLETED)
+        logger.info(f"🎉 Analysis {analysis.target_id} completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ ERROR in analysis {analysis.target_id}: {str(e)}", flush=True)
+        print(f"   Exception type: {type(e).__name__}", flush=True)
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"   Traceback:\n{error_trace}", flush=True)
+        logger.error(f"❌ ERROR in analysis {analysis.target_id}: {str(e)}")
+        logger.error(f"   Exception type: {type(e).__name__}")
+        logger.error(f"   Traceback:\n{error_trace}")
+        dao.update_analysis_status(analysis.target_id, AnalysisStatus.FAILED)
+        print(f"   Status updated to FAILED", flush=True)
+        logger.error(f"   Status updated to FAILED")
