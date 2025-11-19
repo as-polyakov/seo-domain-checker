@@ -79,7 +79,7 @@ The backend will automatically:
 
 - ✅ Initialize the database
 - ✅ Create all tables
-- ✅ Start the API server
+- ✅ Start the API server 
 
 Access:
 
