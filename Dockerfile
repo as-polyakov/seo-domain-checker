@@ -54,6 +54,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Set volume for persistent data
 VOLUME ["/app/data", "/app/logs"]
 
-# Run the application
-CMD ["python", "api_server.py"]
+# Run database initialization then start the application
+CMD ["sh", "-c", "python init_db.py && python api_server.py"]
 

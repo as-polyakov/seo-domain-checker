@@ -39,64 +39,75 @@ an official or supported product of [Company Name] or any affiliated entity.
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### For DevOps / Production Deployment
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide.**
+
+Quick start:
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+docker-compose up -d
+```
+
+### For Local Development
+
+#### Prerequisites
 
 - Python 3.8 or higher
 - Node.js 18 or higher
 - npm or yarn
-- Docker & Docker Compose (optional, for containerized deployment)
-
-### How to Use
+- Docker & Docker Compose
 
 #### 1. Set Environment Variables
 
-Before starting, copy `.env.example` to `.env` and fill in the required API keys:
-
-```sh
+```bash
 cp .env.example .env
-# Edit .env and provide values for AHREFS_API_TOKEN and SIMILAR_WEB_KEY
+# Edit .env and add your API keys:
+# - AHREFS_API_TOKEN
+# - SIMILAR_WEB_KEY
 ```
 
 #### 2. Start the Backend (Docker)
 
-Launch the backend server in detached mode:
-
-```sh
+```bash
 docker-compose up -d
 ```
 
-- Backend API accessible at: [http://localhost:8000](http://localhost:8000)
-- API documentation at: [http://localhost:8000/docs](http://localhost:8000/docs)
+The backend will automatically:
+
+- ✅ Initialize the database
+- ✅ Create all tables
+- ✅ Start the API server
+
+Access:
+
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
 
 #### 3. Start the Frontend
 
-In another terminal, navigate to the frontend folder and run:
-
-```sh
+```bash
 cd frontend
-npm install        # Only required on first run
+npm install  # First time only
 npm run dev
 ```
 
-- Frontend app available at: [http://localhost:3000](http://localhost:3000)
+Access: http://localhost:3000
 
-#### 4. View Logs
+#### 4. Useful Commands
 
-Monitor backend logs (for debugging or monitoring):
-
-```sh
+```bash
+# View backend logs
 docker-compose logs -f backend
-```
 
-#### 5. Stopping the Backend
-
-To stop all Docker services:
-
-```sh
+# Stop backend
 docker-compose down
+
+# Restart backend
+docker-compose restart
+
+# Check status
+docker-compose ps
 ```
-
-**Note:**
-
-- Ensure you have provided valid API keys in your `.env` for full functionality.
-- You may customize port bindings in `docker-compose.yml` if defaults (8000 for backend, 3000 for frontend) are in use by other applications.
