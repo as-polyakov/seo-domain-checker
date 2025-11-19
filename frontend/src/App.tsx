@@ -60,15 +60,18 @@ export default function App() {
         console.log("fetchAnalyses - Received data:", data);
 
         // Convert API response to frontend format
-        const analysesData: Analysis[] = data.analyses.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          status: a.status as AnalysisStatus,
-          createdAt: new Date(a.created_at),
-          completedAt: a.completed_at ? new Date(a.completed_at) : undefined,
-          totalDomains: a.total_domains,
-          domainsAnalyzed: a.domains_analyzed || 0,
-        }));
+        const analysesData: Analysis[] = data.analyses.map((a: any) => {
+          console.log("Processing analysis:", a.id, "status:", a.status, "type:", typeof a.status);
+          return {
+            id: a.id,
+            name: a.name,
+            status: a.status as AnalysisStatus,
+            createdAt: new Date(a.created_at),
+            completedAt: a.completed_at ? new Date(a.completed_at) : undefined,
+            totalDomains: a.total_domains,
+            domainsAnalyzed: a.domains_analyzed || 0,
+          };
+        });
 
         console.log("fetchAnalyses - Processed analyses:", analysesData.length);
         setAnalyses(analysesData);

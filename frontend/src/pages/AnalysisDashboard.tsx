@@ -263,12 +263,20 @@ export default function AnalysisDashboard({ analyses, onNewAnalysis, onSelectAna
       case 'running': return <Loader2 className="h-4 w-4 animate-spin" />;
       case 'completed': return <CheckCheck className="h-4 w-4" />;
       case 'failed': return <XCircle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
     }
   };
 
   const getStatusBadge = (status: AnalysisStatus) => {
-    const toneMap = { pending: 'slate', running: 'blue', completed: 'emerald', failed: 'rose' };
-    return <Badge tone={toneMap[status]}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+    const toneMap: Record<string, string> = { 
+      pending: 'slate', 
+      running: 'blue', 
+      completed: 'emerald', 
+      failed: 'rose' 
+    };
+    const tone = toneMap[status] || 'slate';
+    const displayStatus = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
+    return <Badge tone={tone}>{displayStatus}</Badge>;
   };
 
   const formatDate = (date: Date) => {

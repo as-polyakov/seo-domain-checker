@@ -16,16 +16,15 @@ The source code is made publicly available under a **non-commercial license**.
 
 ## Authorship and Acknowledgments
 
-- **Primary developer**: Anton Polyakov  
+- **Primary developer**: Anton Polyakov
 - **Concept origin**: inspired by discussions with Nataliia Oher
 - **No employment or contractual relationship** existed between the author and Universe Group or
   any other company during development.
- 
+
 ## Disclaimer
 
 This tool is provided for demonstration and research purposes only. It is not
 an official or supported product of [Company Name] or any affiliated entity.
-
 
 ## 🚀 Features
 
@@ -45,196 +44,59 @@ an official or supported product of [Company Name] or any affiliated entity.
 - Python 3.8 or higher
 - Node.js 18 or higher
 - npm or yarn
+- Docker & Docker Compose (optional, for containerized deployment)
 
-### Option 1: Using Startup Scripts (Recommended)
+### How to Use
 
-#### On macOS/Linux:
-```bash
-./start-dev.sh
+#### 1. Set Environment Variables
+
+Before starting, copy `.env.example` to `.env` and fill in the required API keys:
+
+```sh
+cp .env.example .env
+# Edit .env and provide values for AHREFS_API_TOKEN and SIMILAR_WEB_KEY
 ```
 
-#### On Windows:
-```cmd
-start-dev.bat
+#### 2. Start the Backend (Docker)
+
+Launch the backend server in detached mode:
+
+```sh
+docker-compose up -d
 ```
 
-This will:
-1. Create Python virtual environment (if needed)
-2. Install Python dependencies
-3. Install Node.js dependencies
-4. Start the backend on http://localhost:8000
-5. Start the frontend on http://localhost:3000
+- Backend API accessible at: [http://localhost:8000](http://localhost:8000)
+- API documentation at: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Option 2: Manual Setup
+#### 3. Start the Frontend
 
-#### Backend Setup
+In another terminal, navigate to the frontend folder and run:
 
-1. Create and activate a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Start the backend:
-```bash
-python main.py
-```
-
-#### Frontend Setup
-
-1. Navigate to the frontend directory:
-```bash
+```sh
 cd frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
+npm install        # Only required on first run
 npm run dev
 ```
 
-4. Open your browser to http://localhost:3000
+- Frontend app available at: [http://localhost:3000](http://localhost:3000)
 
-## ⌨️ Keyboard Shortcuts
+#### 4. View Logs
 
-When domains are selected:
-- **A** - Mark as OK
-- **S** - Mark for Review
-- **D** - Mark as Reject
-- **O** - Open/collapse details
+Monitor backend logs (for debugging or monitoring):
 
-## 🔧 Configuration
-
-### Backend Configuration
-
-Edit `main.py` to configure:
-- Database connection
-- API endpoints
-- Port settings
-
-### Frontend Configuration
-
-Edit `frontend/vite.config.ts` to configure:
-- API proxy settings
-- Port settings
-- Build options
-
-## 📊 Database
-
-The application uses SQLite with Alembic for migrations.
-
-### Run Migrations
-
-```bash
-alembic upgrade head
+```sh
+docker-compose logs -f backend
 ```
 
-### Create New Migration
+#### 5. Stopping the Backend
 
-```bash
-alembic revision -m "description"
+To stop all Docker services:
+
+```sh
+docker-compose down
 ```
 
-## 🏗️ Building for Production
+**Note:**
 
-### Build Frontend
-
-```bash
-cd frontend
-npm run build
-```
-
-The built files will be in `frontend/dist/`.
-
-### Production Deployment
-
-1. Build the frontend
-2. Serve static files from `frontend/dist/`
-3. Run the Python backend with a production WSGI server (e.g., Gunicorn)
-
-## 📝 Development
-
-### Frontend Development
-
-The frontend uses hot module replacement (HMR) for instant updates during development.
-
-```bash
-cd frontend
-npm run dev
-```
-
-### Backend Development
-
-The backend will need to be restarted after code changes.
-
-```bash
-python main.py
-```
-
-## 🧪 Testing
-
-### Frontend Tests
-```bash
-cd frontend
-npm run test
-```
-
-### Backend Tests
-```bash
-pytest tests/
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## 📄 License
-
-This project is released under the MIT License with Commons Clause Restriction (non-commercial use only).
-See the LICENSE file for details.
-
-## 🔗 Useful Links
-
-- **API Documentation**: [api/README.md](api/README.md)
-- **API Integration Guide**: [API_INTEGRATION.md](API_INTEGRATION.md)
-- **Frontend README**: [frontend/README.md](frontend/README.md)
-- **Frontend Features**: [frontend/FEATURES.md](frontend/FEATURES.md)
-- **Database Schema**: [ddl/001-initial-schema.sql](ddl/001-initial-schema.sql)
-- **Interactive API Docs**: http://localhost:8000/docs (when server is running)
-- **Rules Documentation**: [rules/](rules/)
-
-## 🆘 Troubleshooting
-
-### Port Already in Use
-
-If port 3000 or 8000 is already in use:
-- Change the frontend port in `frontend/vite.config.ts`
-- Change the backend port in `main.py`
-
-### Dependencies Not Installing
-
-- Ensure Python 3.8+ is installed: `python --version`
-- Ensure Node.js 18+ is installed: `node --version`
-- Clear npm cache: `npm cache clean --force`
-- Delete `node_modules` and reinstall: `rm -rf frontend/node_modules && cd frontend && npm install`
-
-### Database Issues
-
-- Delete `ahrefs_data.db` and run migrations again
-- Check database permissions
-
-## 📞 Support
-
-For issues and questions, please open an issue on GitHub.
+- Ensure you have provided valid API keys in your `.env` for full functionality.
+- You may customize port bindings in `docker-compose.yml` if defaults (8000 for backend, 3000 for frontend) are in use by other applications.

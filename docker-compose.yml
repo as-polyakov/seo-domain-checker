@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seo-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # API Keys - Set these in .env file
+      - AHREFS_API_TOKEN=${AHREFS_API_TOKEN}
+      - SIMILAR_WEB_KEY=${SIMILAR_WEB_KEY}
+    volumes:
+      # Persist database and logs
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./ahrefs_data.db:/app/ahrefs_data.db:rw
+    restart: unless-stopped
+    networks:
+      - seo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  seo-network:
+    driver: bridge
